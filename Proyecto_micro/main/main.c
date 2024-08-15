@@ -4,13 +4,13 @@
 #include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
 
-#define PWM_FREQUENCY 9000
+#define PWM_FREQUENCY 15000
 #define PWM_GPIO_NUM GPIO_NUM_4
 
 void app_main(void){
     ledc_timer_config_t ledc_timer_cfg = {
         .duty_resolution = LEDC_TIMER_12_BIT,
-        .freq_hz = 9000,
+        .freq_hz = PWM_FREQUENCY,
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .timer_num = LEDC_TIMER_0,
         .clk_cfg = LEDC_AUTO_CLK,
@@ -45,6 +45,7 @@ void app_main(void){
     ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 100, 0);
 
     int adc_value = 0;
+    int sp_value = 0;
     int buffer[10] = {0};
     int sum = 0;
     int index = 0;
@@ -71,22 +72,21 @@ void app_main(void){
     int iterations = 0;
     while(true){
         
-        /*
-        adc_oneshot_read(adc1_handle, ADC_CHANNEL_4, &adc_value);
+        adc_oneshot_read(adc1_handle, ADC_CHANNEL_4, &sp_value);
         sum -= buffer[index];
-        buffer[index] = adc_value;
+        buffer[index] = sp_value;
         sum += buffer[index];
         index = (index + 1) % 10;
         int average = sum / 10;
         //printf("Moving Average: %d\n", average);
-        ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, average, 0);
-
-        adc_oneshot_read(adc1_handle, ADC_CHANNEL_5, &test);
-        printf("ADC Value: %d\n", test);
-        */
+        //ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, average, 0);
+        setpoint = average;
+    
         adc_oneshot_read(adc1_handle, ADC_CHANNEL_5, &adc_value);
         printf("ADC Value: %d\n", adc_value);
-        
+        printf("Setpoint: %d\n", (int)setpoint);
+                    setpoint = 2500;
+
         input_array[0] = setpoint - adc_value;
         output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
         if(output_array[0] > 4095){
@@ -103,10 +103,10 @@ void app_main(void){
         output_array[1] = output_array[0];
 
         
-        if(iterations >= 1000){
-            setpoint = 2800;
+        /*if(iterations >= 1000){
+            setpoint = 2500;
         }
-        iterations++;
+        iterations++;*/
         vTaskDelay((Ts_ms) / portTICK_PERIOD_MS);
     }
 }
