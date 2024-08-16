@@ -3,11 +3,18 @@
 #include "driver/ledc.h"
 #include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include "math.h"
 
-#define PWM_FREQUENCY 15000
+#define PWM_FREQUENCY 19000
 #define PWM_GPIO_NUM GPIO_NUM_4
+#define POT_CHANNEL ADC_CHANNEL_4
+#define FB_CHANNEL ADC_CHANNEL_5
 
 void app_main(void){
+
+    // Configure PWM
     ledc_timer_config_t ledc_timer_cfg = {
         .duty_resolution = LEDC_TIMER_12_BIT,
         .freq_hz = PWM_FREQUENCY,
@@ -26,7 +33,9 @@ void app_main(void){
     };
     ledc_channel_config(&ledc_channel_cfg);
     ledc_fade_func_install(0);
+    //
 
+    // Configure ADC Oneshot and Channels
     adc_oneshot_unit_handle_t adc1_handle;
     adc_oneshot_unit_init_cfg_t adc1_init_cfg = {
         .unit_id = ADC_UNIT_1,
@@ -41,72 +50,77 @@ void app_main(void){
     };
     adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_4, &adc1_chan_cfg);
     adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_5, &adc1_chan_cfg);
+    //
 
-    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 100, 0);
+    // Configure ADC Calibration
+    adc_cali_handle_t adc1_cali_handle;
+    adc_cali_curve_fitting_config_t adc1_cali_cfg = {
+        .unit_id = ADC_UNIT_1,
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_12,
+    };
+    adc_cali_create_scheme_curve_fitting(&adc1_cali_cfg, &adc1_cali_handle);
+    //
 
-    int adc_value = 0;
-    int sp_value = 0;
-    int buffer[10] = {0};
-    int sum = 0;
-    int index = 0;
+    int fb_value_mv = 0;
+    float fb_value_v = 0.0;
+    int setpoint_mv = 0;
+    float setpoint_v = 0.0;
 
-    float a_coefficients[3] = {0, 0, -1};
-    float b_coefficients[3];
+    // PID constants and variables
+    const float Kp = 1;
+    const float Ki = 1;
+    const float Kd = 0;
+    const float Ts = 0.001;
+    const int Ts_ms = Ts * 1000;
+
+    const float a_coefficients[3] = {0, 0, -1};
+    const float b_coefficients[3] = {
+        Kp + (Ki * Ts / 2) + (2 * Kd / Ts),
+        Ki * Ts - (4 * Kd / Ts),
+        -Kp + (Ki * Ts / 2) + (2 * Kd / Ts)
+    };
     float input_array[3] = {0, 0, 0};
-    float output_array[3] = {0, 0, 0};
+    float output_array[3] = {0, 0, 0}; 
+    //
 
-    float Kp = 1;
-    float Ki = 5;
-    float Kd = 0;
-    float Ts = 0.01;
-    float Ts_ms = Ts * 1000;
+    // Feedback correction coefficients
+    const float fb_curve_coefficients[4] = {-0.1436, 4.2716, -0.6413, 0.1787};
+    //
 
-    b_coefficients[0] = Kp + (Ki * Ts / 2) + (2 * Kd / Ts);
-    b_coefficients[1] = Ki * Ts - (4 * Kd / Ts);
-    b_coefficients[2] = -Kp + (Ki * Ts / 2) + (2 * Kd / Ts);
+    int pwm_output_bits = 0;
 
-    float setpoint = 3000;
-
-    int test = 0;
-
-    int iterations = 0;
     while(true){
-        
-        adc_oneshot_read(adc1_handle, ADC_CHANNEL_4, &sp_value);
-        sum -= buffer[index];
-        buffer[index] = sp_value;
-        sum += buffer[index];
-        index = (index + 1) % 10;
-        int average = sum / 10;
-        //printf("Moving Average: %d\n", average);
-        //ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, average, 0);
-        setpoint = average;
-    
-        adc_oneshot_read(adc1_handle, ADC_CHANNEL_5, &adc_value);
-        printf("ADC Value: %d\n", adc_value);
-        printf("Setpoint: %d\n", (int)setpoint);
-                    setpoint = 2500;
+        TickType_t xLastWakeTime = xTaskGetTickCount();
 
-        input_array[0] = setpoint - adc_value;
+        
+        adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, POT_CHANNEL, &setpoint_mv);
+        setpoint_v = setpoint_mv * (12.0 / 3300.0);
+        adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
+        fb_value_v = fb_value_mv / 1000.0;
+        fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
+
+
+        //printf("Setpoint: %.2f V \n", setpoint_v);
+        //printf("Feedback: %.2f V \n", fb_value_v);
+        setpoint_v = 9.6;
+        input_array[0] = setpoint_v - fb_value_v;
         output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
-        if(output_array[0] > 4095){
-            output_array[0] = 4095;
-        } else if(output_array[0] < 0) {
-            output_array[0] = 0;
+        
+        pwm_output_bits = ((int) output_array[0]) * 4095 / 12;
+
+        if(pwm_output_bits > 4095){
+            pwm_output_bits = 4095;
+        } else if(pwm_output_bits < 0) {
+            pwm_output_bits = 0;
         }
         
-        
-        ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, (int) output_array[0], 0);
+        ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
         input_array[2] = input_array[1];
         input_array[1] = input_array[0];
         output_array[2] = output_array[1];
         output_array[1] = output_array[0];
 
-        
-        /*if(iterations >= 1000){
-            setpoint = 2500;
-        }
-        iterations++;*/
-        vTaskDelay((Ts_ms) / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(Ts_ms));
     }
 }
