@@ -9,7 +9,7 @@
 #include "esp_timer.h"
 
 #define PWM_FREQUENCY 19000
-#define TIMER_PERIOD_US 500
+#define TIMER_PERIOD_US 200
 #define PWM_GPIO_NUM GPIO_NUM_4
 #define POT_CHANNEL ADC_CHANNEL_4
 #define FB_CHANNEL ADC_CHANNEL_5
@@ -24,7 +24,7 @@ float setpoint_v = 0.0;
 
 // PID constants and variables
 const float Kp = 1;
-const float Ki = 10;
+const float Ki = 5;
 const float Kd = 0;
 const float Ts = TIMER_PERIOD_US / 1000000.0;
 //const int Ts_ms = Ts * 1000;
@@ -125,7 +125,7 @@ void timer_callback(void* arg){
 
     //printf("Setpoint: %.2f V \n", setpoint_v);
     //printf("Feedback: %.2f V \n", fb_value_v);
-    setpoint_v = 9.6;
+    //setpoint_v = 7.6;
     input_array[0] = setpoint_v - fb_value_v;
     output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
     
