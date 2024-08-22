@@ -23,17 +23,28 @@ int setpoint_mv = 0;
 float setpoint_v = 0.0;
 
 // PID constants and variables
-const float Kp = 1;
-const float Ki = 5;
-const float Kd = 0;
+const float Kp = 0.57882;
+const float Ki = 181.8022;
+const float Kd = -0.00019491;
 const float Ts = TIMER_PERIOD_US / 1000000.0;
+const float Nc = 2233.8172;
 //const int Ts_ms = Ts * 1000;
 
-const float a_coefficients[3] = {0, 0, -1};
+/*const float a_coefficients[3] = {0, 0, -1};
 const float b_coefficients[3] = {
     Kp + (Ki * Ts / 2) + (2 * Kd / Ts),
     Ki * Ts - (4 * Kd / Ts),
     -Kp + (Ki * Ts / 2) + (2 * Kd / Ts)
+};*/
+const float a_coefficients[3] = {
+    1,
+    -2 + Nc * Ts,
+    1 - Nc * Ts
+};
+const float b_coefficients[3] = {
+    Kp + Kd * Nc,
+    -2 * Kp - 2 * Kd * Nc + Ki * Ts + Kp * Nc * Ts,
+    Kp + Kd * Nc - Ki * Ts - Kp * Nc * Ts + Ki * Nc * Ts * Ts
 };
 float input_array[3] = {0, 0, 0};
 float output_array[3] = {0, 0, 0}; 
@@ -128,7 +139,7 @@ void timer_callback(void* arg){
     //setpoint_v = 7.6;
     input_array[0] = setpoint_v - fb_value_v;
     output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
-    
+
     pwm_output_bits = ((int) output_array[0]) * 4095 / 12;
 
     if(pwm_output_bits > 4095){
