@@ -666,3 +666,60 @@ El mismo se puede representar en función de transferencia luego de transformarl
     H(s) = \dfrac{3062\ s + 1.456 \times 10^7}{s^2 + 1.199 \times 10^4\ s + 1.722 \times 10^6}
 \end{equation}
 \vspace{-0.5cm}
+
+La planta discretizada mediante retención de orden cero (zoh), con un tiempo de muestre de 200
+microsegundos es:
+
+\vspace{-0.5cm}
+\begin{equation}
+    H(z) = \dfrac{0.3798\ z - 0.1602}{z^2 - 1.065\ z + 0.09091}
+\end{equation}
+\vspace{-0.5cm}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_impulse.png}
+        %\vspace{-0.25cm}
+        \caption{Respuesta al impulso.}
+        \label{fig:estimado_impulse}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_step.png}
+        %\vspace{-0.25cm}
+        \caption{Respuesta al escalón.}
+        \label{fig:estimado_step}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Análisis de la respuesta temporal del sistema estimado.}
+    \label{fig:estimado_respuestas}
+\end{figure}
+\vspace{-0.5cm}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_pzmap.png}
+        %\vspace{-0.25cm}
+        \caption{Mapa de polos y ceros.}
+        \label{fig:estimado_pzmap}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_rlocus.png}
+        %\vspace{-0.25cm}
+        \caption{Lugar geométrico de las raíces.}
+        \label{fig:estimado_rlocus}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Análisis de la respuesta temporal del sistema estimado.}
+    \label{fig:estimado_estabilidad}
+\end{figure}
+\vspace{-0.5cm}
