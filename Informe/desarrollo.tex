@@ -116,7 +116,6 @@ Finalmente, se puede obtener la ecuación en diferencias del controlador PID:
 \end{multline}
 \vspace{-0.5cm}
 
-
 \subsubsection*{\it{Modelado del sistema}}
 \vspace{-0.25cm}
 Primero, la fuente se incluye en el circuito cuando el interruptor esta conectado al nodo 1.
@@ -532,3 +531,138 @@ Escribiendo el sistema en tiempo continuo:
 Dado que B es el resultado promediado del sistema conmutado y los valores del voltaje de entrada,
 el capacitor, la resistencia y el inductor son fijos, entonces B será decidido por el ciclo de
 trabajo $d$. El valor de B cambiará cuando cambie el ciclo de trabajo $d$.
+
+
+
+\subsubsection*{\it{Identificación del sistema}}
+\vspace{-0.25cm}
+Si bien el modelo del sistema se puede obtener a partir de las ecuaciones de Kirchhoff, se procede
+a obtener un modelo empírico del sistema. Para ello, se aplica una señal de entrada al sistema y se
+mide la respuesta del sistema.
+
+En esta ocasión, se optó por utilizar una señal de entrada PRBS
+(Pseudo Random Binary Sequence, en español Secuencia Binaria Pseudo Aleatoria). La misma intenta
+cubrir todo el rango de frecuencias posibles, y es útil para identificar sistemas lineales y no lineales.
+Utilizando MATLAB, se genera una señal PRBS de orden 10, con un tiempo de muestreo de 200 microsegundos,
+y una duración de 3 períodos. Esto significa una secuencia de 1023 valores en 0,2046 segundos repetida tres veces.
+Es decir, 3069 valores en un rango de 0 a 0,6138 segundos.
+
+Se programa el microcontrolador para reproducir la señal PRBS en el convertidor Buck, medir la salida
+del sistema y luego enviar los datos mediante comunicación serial. Mediante un programa en Python, se guardan
+los valores en un archivo csv para luego introducir en el System Identification Toolbox de MATLAB:
+
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[height=6cm]{identificacion_io.png}
+        %\vspace{-0.25cm}
+        \caption{Vista completa de la señal de identificación.}
+        \label{fig:identificacion_io_gral}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[height=6cm]{identificacion_zoom.png}
+        %\vspace{-0.25cm}
+        \caption{Vista acercada de la señal de identificación.}
+        \label{fig:identificacion_io_zoom}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Salida (arriba) y entrada (abajo) del sistema con la señal de identificación.}
+    \label{fig:identificacion_io}
+\end{figure}
+\vspace{-0.5cm}
+
+Se seleccionan los primeros 2455 valores (80\% de los valores totales) como las señales de evaluación
+y los restantes 614 valores (20\% de los valores totales) como las señales de validación. Finalmente,
+se estima un modelo en espacios de estado de orden 2 utilizando la función \textit{N4SID} del System Identification Toolbox:
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=10cm]{identificacion_comparacion.png}
+        %\vspace{-0.25cm}
+        \caption{Comparación del modelo estimado con la respuesta medida.}
+        \vspace{0.25cm}
+        \label{fig:identificacion_comparacio n}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=10cm]{identificacion_residuos.png}
+        %\vspace{-0.25cm}
+        \caption{Análisis residual del modelo estimado.}
+        \label{fig:identificacion_residuos}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Resultados de la estimación del modelo del sistema.}
+    \label{fig:identificacion_resultados}
+\end{figure}
+\vspace{-0.5cm}
+
+Como se puede observar en la Figura \ref{fig:identificacion_resultados}, el modelo estimado coincide
+con la respuesta medida del sistema en un 73,39\%. Además, el análisis residual del modelo estimado
+demuestra una buen resultado en la autocorrelación de residuales para la salida y un resultado
+satisfactorio para la correlación cruzada de residuales entre la entrada y la salida.
+
+El modelo estimado en espacios de estado es el siguiente:
+
+\vspace{-0.5cm}
+\begin{equation}
+    \begin{cases}
+        \begin{bmatrix}
+            \dot{x_1}\\
+            \dot{x_2}
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+            -213.1  &   279.1\\
+            2819    &   -1.178\times 10^4
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            -28.98 \\
+            294,4
+        \end{bmatrix}
+        \cdot
+        u 
+        +
+        \begin{bmatrix}
+            -11.92 \\
+            -95.37
+        \end{bmatrix}
+        \cdot
+        e
+        \\
+        y =
+        \begin{bmatrix}
+            -56.54 & 4.834
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2
+        \end{bmatrix}
+        +
+        e
+
+    \end{cases}
+\end{equation}
+
+El mismo se puede representar en función de transferencia luego de transformarlo mediante MATLAB:
+
+\vspace{-0.5cm}
+\begin{equation}
+    H(s) = \dfrac{3062\ s + 1.456 \times 10^7}{s^2 + 1.199 \times 10^4\ s + 1.722 \times 10^6}
+\end{equation}
+\vspace{-0.5cm}
