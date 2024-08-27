@@ -118,7 +118,30 @@ Finalmente, se puede obtener la ecuación en diferencias del controlador PID:
 
 \subsubsection*{\it{Modelado del sistema}}
 \vspace{-0.25cm}
+
+El sistema convertidor Buck es un sistema conmutado. Consta de dos estados de conmutación: 
+en primer lugar, cuando el interruptor está conectado al nodo 1, estado de carga; en segundo lugar, cuando
+el interruptor está conectado al nodo 2, estado de descarga.
+El sistema conmutado se puede modelar como un sistema promediado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=4.5cm]{modelado_circuito.png}
+    \vspace{-0.25cm}
+    \caption{Circuito general del sistema.}
+    \label{fig:modelado_circuito}
+\end{figure}
+
 Primero, la fuente se incluye en el circuito cuando el interruptor esta conectado al nodo 1.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=4.5cm]{modelo_con_vg.png}
+    \vspace{-0.25cm}
+    \caption{Circuito con fuente de voltaje.}
+    \label{fig:modelado_con_vg}
+\end{figure}
+
 El convertidor Buck se puede modelar de la siguiente manera.
 
 \vspace{-0.5cm}
@@ -151,7 +174,8 @@ El convertidor Buck se puede modelar de la siguiente manera.
     \end{bmatrix}
 \end{equation}
 
-Donde u es el voltage del convertidor e i es la corriente.
+Donde u es el voltaje del convertidor e i es la corriente.
+
 Modelando los dos componentes de almacenamiento de energía que tiene:
 
 \vspace{-0.5cm}
@@ -217,8 +241,7 @@ donde el voltaje del resistor es el producto de la corriente y la resistencia, e
 \end{equation}
 \vspace{-0.5cm}
 
-
-
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         i_C \\
@@ -252,6 +275,7 @@ donde el voltaje del resistor es el producto de la corriente y la resistencia, e
 
 Incluyendo las ecuaciones constitutivas, el sistema se modela como:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         \dfrac{d}{dt}u_C\\
@@ -307,6 +331,7 @@ Incluyendo las ecuaciones constitutivas, el sistema se modela como:
 
 El sistema de ecuaciones en espacio de estado esta dado por:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{cases}
     \dot{x} = Ax + Bu \\
@@ -315,9 +340,19 @@ El sistema de ecuaciones en espacio de estado esta dado por:
 \end{equation}
 
 Donde u es la entrada del sistema e y la salida.
-Cuando el interruptor esta conectado al nodo dos, las fuente de tension 
+
+Cuando el interruptor esta conectado al nodo dos, las fuente de tensión 
 no se incluye en el circuito.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=4.5cm]{modelo_sin_vg.png}
+    \vspace{-0.25cm}
+    \caption{Circuito sin fuente de voltaje.}
+    \label{fig:modelado_sin_vg}
+\end{figure}
+
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         i_C\\
@@ -346,6 +381,7 @@ no se incluye en el circuito.
 
 Modelando los dos componentes de almacenamiento de energía que tiene:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         i_C \\
@@ -382,6 +418,7 @@ Modelando los dos componentes de almacenamiento de energía que tiene:
 
 Incluyendo las ecuaciones constitutivas, el sistema se modela como:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         \dfrac{d}{dt}u_C\\
@@ -408,6 +445,7 @@ Incluyendo las ecuaciones constitutivas, el sistema se modela como:
 
 El sistema de ecuaciones en sistema de estado viene dado por:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         \dfrac{d}{dt}u_C\\
@@ -435,6 +473,7 @@ El sistema de ecuaciones en sistema de estado viene dado por:
     \end{bmatrix} 
 \end{equation}
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         u_0\\
@@ -451,12 +490,13 @@ El sistema de ecuaciones en sistema de estado viene dado por:
     \end{bmatrix}
 \end{equation}
 
-OBTENER SISTEMA PROMEDIO
+\textbf{Obtención del sistema promediado:}
 
 El sistema promediado en el tiempo se puede derivar como la ponderación promediada de
 los dos sistemas. Sistema S1 con fuente de voltaje y sistema S2
 sin fuente de voltaje. Suponiendo el ciclo de trabajo d, tenemos:
 
+\vspace{-0.5cm}
 \begin{equation}
     S_{Promedio} = d \cdot S_1 + (1 - d) \cdot S_2
 \end{equation}
@@ -465,16 +505,19 @@ Como se puede observar en las matrices ABCD de los dos sistemas, las matrices AC
 son iguales mientras que la matriz B es diferente.
 Entonces solo es necesario tomar el valor promedio de la matriz B.
 
+\vspace{-0.5cm}
 \begin{equation}
     B_{Promedio} = d \cdot B_1 + (1 - d) \cdot B_2
 \end{equation}
 
 La matriz B se puede escribir como:
 
+\vspace{-0.5cm}
 \begin{equation}
     B_{Promedio} = d \cdot (B_11 + B_12) + (1 - d) \cdot (B_21 + B_22)
 \end{equation}
 
+\vspace{-0.5cm}
 \[
 \text{Donde: } B_{11} = \begin{bmatrix}
 0 & 0 \\
@@ -487,6 +530,7 @@ B_{12} = \begin{pmatrix}
 \end{pmatrix}
 \]
 
+\vspace{-0.5cm}
 \[
 B_{21} = \begin{bmatrix}
 0 & 0 \\
@@ -501,6 +545,7 @@ B_{22} = \begin{bmatrix}
 
 Escribiendo el sistema en tiempo continuo:
 
+\vspace{-0.5cm}
 \begin{equation}
     \begin{bmatrix}
         \dfrac{d}{dt}u_C\\
