@@ -537,8 +537,8 @@ trabajo $d$. El valor de B cambiará cuando cambie el ciclo de trabajo $d$.
 \subsubsection*{\it{Identificación del sistema}}
 \vspace{-0.25cm}
 Si bien el modelo del sistema se puede obtener a partir de las ecuaciones de Kirchhoff, se procede
-a obtener un modelo empírico del sistema. Para ello, se aplica una señal de entrada al sistema y se
-mide la respuesta del sistema.
+a obtener un modelo empírico. Para ello, se aplica una señal de entrada al sistema físico y se
+mide la respuesta del mismo.
 
 En esta ocasión, se optó por utilizar una señal de entrada PRBS
 (Pseudo Random Binary Sequence, en español Secuencia Binaria Pseudo Aleatoria). La misma intenta
@@ -548,7 +548,7 @@ y una duración de 3 períodos. Esto significa una secuencia de 1023 valores en 
 Es decir, 3069 valores en un rango de 0 a 0,6138 segundos.
 
 Se programa el microcontrolador para reproducir la señal PRBS en el convertidor Buck, medir la salida
-del sistema y luego enviar los datos mediante comunicación serial. Mediante un programa en Python, se guardan
+del sistema y luego enviar los datos mediante comunicación serial. A través de un programa en Python, se guardan
 los valores en un archivo csv para luego introducir en el System Identification Toolbox de MATLAB:
 
 
@@ -576,8 +576,8 @@ los valores en un archivo csv para luego introducir en el System Identification 
 \end{figure}
 \vspace{-0.5cm}
 
-Se seleccionan los primeros 2455 valores (80\% de los valores totales) como las señales de evaluación
-y los restantes 614 valores (20\% de los valores totales) como las señales de validación. Finalmente,
+Se seleccionan los primeros 2455 valores (80\% de los valores totales) como la señal de evaluación
+y los restantes 614 valores (20\% de los valores totales) como la señal de validación. Finalmente,
 se estima un modelo en espacios de estado de orden 2 utilizando la función \textit{N4SID} del System Identification Toolbox:
 
 \begin{figure}[H]
@@ -606,8 +606,9 @@ se estima un modelo en espacios de estado de orden 2 utilizando la función \tex
 \vspace{-0.5cm}
 
 Como se puede observar en la Figura \ref{fig:identificacion_resultados}, el modelo estimado coincide
-con la respuesta medida del sistema en un 73,39\%. Además, el análisis residual del modelo estimado
-demuestra una buen resultado en la autocorrelación de residuales para la salida y un resultado
+con la respuesta medida del sistema (señal de evaluación) en un 73,39\%. Respecto a la señal de 
+validación, coincide en un 65,8\%. Además, el análisis residual del modelo estimado
+demuestra un buen resultado en la autocorrelación de residuales para la salida y un resultado
 satisfactorio para la correlación cruzada de residuales entre la entrada y la salida.
 
 El modelo estimado en espacios de estado es el siguiente:
@@ -667,7 +668,7 @@ El mismo se puede representar en función de transferencia luego de transformarl
 \end{equation}
 \vspace{-0.5cm}
 
-La planta discretizada mediante retención de orden cero (zoh), con un tiempo de muestre de 200
+La planta discretizada mediante retención de orden cero (zoh), con un tiempo de muestreo de 200
 microsegundos es:
 
 \vspace{-0.5cm}
