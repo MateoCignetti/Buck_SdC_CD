@@ -573,6 +573,23 @@ Escribiendo el sistema en tiempo continuo:
     \end{bmatrix} 
 \end{equation}
 
+\vspace{-0.5cm}
+\begin{equation}
+    \begin{bmatrix}
+        u_0\\
+        i_L
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        1 & R_C\\
+        0 & 1
+    \end{bmatrix}
+    \begin{bmatrix}
+        u_C\\
+        i_L
+    \end{bmatrix}
+\end{equation}
+
 Dado que B es el resultado promediado del sistema conmutado y los valores del voltaje de entrada,
 el capacitor, la resistencia y el inductor son fijos, entonces B será decidido por el ciclo de
 trabajo $d$. El valor de B cambiará cuando cambie el ciclo de trabajo $d$.
@@ -769,3 +786,28 @@ microsegundos es:
     \label{fig:estimado_estabilidad}
 \end{figure}
 \vspace{-0.5cm}
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+    \hline
+    Voltaje de retroalimentación (V) & Tensión en la carga (V) \\ \hline
+    0                                & 0                       \\
+    0.27                             & 1                       \\
+    0.55                             & 2                       \\
+    0.83                             & 3.05                    \\
+    1.07                             & 3.9                     \\
+    1.38                             & 5.01                    \\
+    1.66                             & 6.03                    \\
+    1.95                             & 7.09                    \\
+    2.19                             & 8.02                    \\
+    2.44                             & 9.06                    \\
+    2.65                             & 9.96                    \\
+    2.87                             & 11                      \\
+    3.04                             & 12                      \\ \hline
+    \end{tabular}
+    \label{tab:calibración_fb}
+    \vspace{-0.25cm}
+    \caption{Calibración de voltaje de retroalimentación}
+\end{table}
