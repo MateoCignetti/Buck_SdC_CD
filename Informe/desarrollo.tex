@@ -295,6 +295,46 @@ Lo que nos deja las siguientes ecuaciones de estado:
     y = x_2 
 \end{equation}
 
+\subsubsection*{\it{Circuito}}
+\vspace{-0.25cm}
+
+Para construir el circuito físico, primero se realizó el siguiente diagrama:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=4.5cm]{diagrama_circuito.png}
+    \vspace{-0.25cm}
+    \caption{Diagrama de circuito.}
+    \label{fig:diagrama_circuito}
+\end{figure}
+
+El divisor resistivo que conecta la retroalimentación al microcontrolador esta diseñado para que entregue una 
+tensión de 0 V a 3,3 V. Para ello se realizo una tabla con valores de entrada y salida:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+    \hline
+    Voltaje de retroalimentación (V) & Tensión en la carga (V) \\ \hline
+    0                                & 0                       \\
+    0.27                             & 1                       \\
+    0.55                             & 2                       \\
+    0.83                             & 3.05                    \\
+    1.07                             & 3.9                     \\
+    1.38                             & 5.01                    \\
+    1.66                             & 6.03                    \\
+    1.95                             & 7.09                    \\
+    2.19                             & 8.02                    \\
+    2.44                             & 9.06                    \\
+    2.65                             & 9.96                    \\
+    2.87                             & 11                      \\
+    3.04                             & 12                      \\ \hline
+    \end{tabular}
+    \label{tab:calibración_fb}
+    \vspace{-0.25cm}
+    \caption{Calibración de voltaje de retroalimentación}
+\end{table}
+
 \subsubsection*{\it{Identificación del sistema}}
 \vspace{-0.25cm}
 Si bien el modelo del sistema se puede obtener a partir de las ecuaciones de Kirchhoff, se procede
@@ -438,6 +478,9 @@ microsegundos es:
 \end{equation}
 \vspace{-0.5cm}
 
+A continuación se grafican las respuestas al impulso y al escalón, el mapa de polos y ceros y el lugar
+geométrico de las raíces.
+
 \begin{figure}[H]
     \centering
 
@@ -486,27 +529,8 @@ microsegundos es:
 \end{figure}
 \vspace{-0.5cm}
 
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|c|c|}
-    \hline
-    Voltaje de retroalimentación (V) & Tensión en la carga (V) \\ \hline
-    0                                & 0                       \\
-    0.27                             & 1                       \\
-    0.55                             & 2                       \\
-    0.83                             & 3.05                    \\
-    1.07                             & 3.9                     \\
-    1.38                             & 5.01                    \\
-    1.66                             & 6.03                    \\
-    1.95                             & 7.09                    \\
-    2.19                             & 8.02                    \\
-    2.44                             & 9.06                    \\
-    2.65                             & 9.96                    \\
-    2.87                             & 11                      \\
-    3.04                             & 12                      \\ \hline
-    \end{tabular}
-    \label{tab:calibración_fb}
-    \vspace{-0.25cm}
-    \caption{Calibración de voltaje de retroalimentación}
-\end{table}
+La respuesta al impulso del sistema converge a cero cuando el tiempo tiende al infinito.
+En la respuesta al escalon, el sistema converge a un valor.
+La ubicación de polos y el lugar geométricos de las raices estan ubicados dentro 
+del circulo unitario en el plano z. Debido a estas caracteristicas se determina que el sistema 
+es estable.
