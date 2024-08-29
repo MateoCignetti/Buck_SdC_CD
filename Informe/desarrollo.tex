@@ -142,204 +142,45 @@ Primero, la fuente se incluye en el circuito cuando el interruptor esta conectad
     \label{fig:modelado_con_vg}
 \end{figure}
 
-El convertidor Buck se puede modelar de la siguiente manera.
+Aplicando ley de Kirchoff obtenemos:
 
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        i_U\\
-        i_C\\
-        i_{R_C}\\
-        i_{R_L}\\
-        u_L\\
-        u_I\\
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & 0 & 0 & 0 & 1 & 0\\
-        0 & 0 & 0 & 0 & 1 & -1\\
-        0 & 0 & 0 & 0 & 1 & -1\\
-        0 & 0 & 0 & 0 & 1 & 0\\
-        -1 & -1 & -1 & -1 & 0 & 0\\
-        0 & 1 & 1 & 0 & 0 & 0\\
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_U\\
-        u_C\\
-        u_{R_C}\\
-        u_{R_L}\\
-        i_L\\
-        i_I\\
-    \end{bmatrix}
+    u_1 = Lx'_1 + x_2
 \end{equation}
-
-Donde u es el voltaje del convertidor e i es la corriente.
-
-Modelando los dos componentes de almacenamiento de energía que tiene:
 
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        i_C \\
-        u_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & 1 \\
-        -1 & 0
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C \\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & -1 \\
-        -1 & 0
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_U \\
-        i_I
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & 0 \\
-        -1 & -1
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_{R_C} \\
-        u_{R_L}
-    \end{bmatrix}
+    Cx'_2 = x_1 - \dfrac{1}{R} x_2 
 \end{equation}
 
-Dado que el voltaje de salida es la suma del voltaje del capacitor y del voltaje del resistor, 
-donde el voltaje del resistor es el producto de la corriente y la resistencia, entonces se tiene que:
-
-\vspace{-0.75cm}
-\begin{equation}
-    u_0 = u_C + u_{R_C}
-\end{equation}
-\vspace{-0.75cm}
-
-\vspace{-0.75cm}
-\begin{equation}
-    u_{R_C} = R_C \cdot i_L
-\end{equation}
-\vspace{-0.75cm}
-
-\vspace{-0.75cm}
-\begin{equation}
-    u_0 = u_C + u_{R_C} = [1 \ \ R_C] 
-    \begin{bmatrix}
-        u_C \\
-        i_L
-    \end{bmatrix}
-\end{equation}
-\vspace{-0.5cm}
+Reordenando nos queda:
 
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        i_C \\
-        u_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & 1 \\
-        -1 & -R_C - R_L
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C \\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 \\
-        -1
-    \end{bmatrix}
+    x'_1 = -\dfrac{1}{L} x_2 + \dfrac{1}{L} u_1
 \end{equation}
-
-
-\begin{equation}
-        u_0 = [1 \ \ R_C] 
-    \begin{bmatrix}
-        u_C \\
-        i_L
-    \end{bmatrix}
-\end{equation}
-
-Incluyendo las ecuaciones constitutivas, el sistema se modela como:
 
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        \dfrac{d}{dt}u_C\\
-        \dfrac{d}{dt}i_L
+    x'_2 = \dfrac{1}{C}x_1 - \dfrac{1}{RC} x_2 
+\end{equation}
+
+De aqui podemos obtener las matrices $A_1$ y $B_1$:
+
+\begin{equation}
+    A_1 = \begin{bmatrix}
+        0 & -\dfrac{1}{L}\\
+        \dfrac{1}{C} & -\dfrac{1}{RC}
     \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & \dfrac{1}{C}\\
-        -\dfrac{1}{L} & -\dfrac{R_C + R_L}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & -\dfrac{1}{C}\\
-        -\dfrac{1}{L} & -\dfrac{R_C}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_U\\
-        i_I
-    \end{bmatrix}  
 \end{equation}
 
 \begin{equation}
-    \begin{bmatrix}
-        u_0\\
-        i_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        1 & R_C\\
-        0 & 1
-    \end{bmatrix}
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & 0\\
-        0 & 0
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_U\\
-        i_I
+    B_1 = \begin{bmatrix}
+        \dfrac{1}{L}\\
+        0
     \end{bmatrix}
 \end{equation}
-
-El sistema de ecuaciones en espacio de estado esta dado por:
-
-\vspace{-0.5cm}
-\begin{equation}
-    \begin{cases}
-    \dot{x} = Ax + Bu \\
-    y = Cx
-    \end{cases}
-\end{equation}
-
-Donde u es la entrada del sistema e y la salida.
 
 Cuando el interruptor esta conectado al nodo dos, las fuente de tensión 
 no se incluye en el circuito.
@@ -352,249 +193,107 @@ no se incluye en el circuito.
     \label{fig:modelado_sin_vg}
 \end{figure}
 
+Nuevamente aplicando ley de Kirchoff, y reordenando las ecuaciones:
+
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        i_C\\
-        i_{R_C}\\
-        i_{R_L}\\
-        u_L\\
-        u_I\\
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & 0 & 0 & 1 & -1\\
-        0 & 0 & 0 & 1 & -1\\
-        0 & 0 & 0 & 1 & -1\\
-        -1 & -1 & -1 & 0 & 0\\
-        1 & 1 & 0 & 0 & 0\\
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C\\
-        u_{R_C}\\
-        u_{R_L}\\
-        i_L\\
-        i_I\\
+    0 = Lx'_1 + x_2
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    Cx'_2 = x_1 - \dfrac{1}{R} x_2 
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    x'_1 = -\dfrac{1}{L} x_2
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    x'_2 = \dfrac{1}{C} x_1 - \dfrac{1}{RC} x_2 
+\end{equation}
+
+De aqui podemos obtener las matrices $A_2$ y $B_2$:
+
+\begin{equation}
+    A_2 = \begin{bmatrix}
+        0 & -\dfrac{1}{L}\\
+        \dfrac{1}{C} & -\dfrac{1}{RC}
     \end{bmatrix}
 \end{equation}
 
-Modelando los dos componentes de almacenamiento de energía que tiene:
-
-\vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        i_C \\
-        u_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & 1 \\
-        -1 & 0
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C \\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & 0 \\
-        -1 & -1
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_{R_C} \\
-        u_{R_L}
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        -1 \\
+    B_2 = \begin{bmatrix}
+        0\\
         0
     \end{bmatrix}
-    \cdot
-    i_I
 \end{equation}
 
-Incluyendo las ecuaciones constitutivas, el sistema se modela como:
+Para los dos casos, las salida es igual a la tension en el capacitor, $x_2$:
 
 \vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        \dfrac{d}{dt}u_C\\
-        \dfrac{d}{dt}i_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & \dfrac{1}{C}\\
-        -\dfrac{1}{L} & -\dfrac{R_C + R_L}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        -\dfrac{1}{C}\\
-        -\dfrac{R_C}{L}
-    \end{bmatrix}
-    \cdot
-   i_I 
-\end{equation}
-
-El sistema de ecuaciones en sistema de estado viene dado por:
-
-\vspace{-0.5cm}
-\begin{equation}
-    \begin{bmatrix}
-        \dfrac{d}{dt}u_C\\
-        \dfrac{d}{dt}i_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & \dfrac{1}{C}\\
-        -\dfrac{1}{L} & -\dfrac{R_C + R_L}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & -\dfrac{1}{C}\\
-        0 & -\dfrac{R_C}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_U\\
-        i_I
-    \end{bmatrix} 
-\end{equation}
-
-\vspace{-0.5cm}
-\begin{equation}
-    \begin{bmatrix}
-        u_0\\
-        i_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        1 & R_C\\
+    y = \begin{bmatrix}
         0 & 1
     \end{bmatrix}
+    \cdot
     \begin{bmatrix}
-        u_C\\
-        i_L
+        x_1 \\
+        x_2
     \end{bmatrix}
 \end{equation}
 
 \textbf{Obtención del sistema promediado:}
 
-El sistema promediado en el tiempo se puede derivar como la ponderación promediada de
-los dos sistemas. Sistema S1 con fuente de voltaje y sistema S2
-sin fuente de voltaje. Suponiendo el ciclo de trabajo d, tenemos:
-
-\vspace{-0.5cm}
-\begin{equation}
-    S_{Promedio} = d \cdot S_1 + (1 - d) \cdot S_2
-\end{equation}
-
-Como se puede observar en las matrices ABCD de los dos sistemas, las matrices ACD
-son iguales mientras que la matriz B es diferente.
-Entonces solo es necesario tomar el valor promedio de la matriz B.
+La solución total se puede obtener promediando en espacio de estados, esto es, sumando los términos 
+para cada análisis del modo lineal conmutado. Como solo cambia la matriz B, se hace sobre esa unica matriz.
+Suponiendo el ciclo de trabajo d, tenemos:
 
 \vspace{-0.5cm}
 \begin{equation}
     B_{Promedio} = d \cdot B_1 + (1 - d) \cdot B_2
 \end{equation}
 
-La matriz B se puede escribir como:
+Sustituyendo obtenemos la matriz A, B y C del sistema:
 
-\vspace{-0.5cm}
 \begin{equation}
-    B_{Promedio} = d \cdot (B_11 + B_12) + (1 - d) \cdot (B_21 + B_22)
+    A = \begin{bmatrix}
+        0 & -\dfrac{1}{L}\\
+        \dfrac{1}{C} & -\dfrac{1}{RC}
+    \end{bmatrix}
 \end{equation}
 
-\vspace{-0.5cm}
-\[
-\text{Donde: } B_{11} = \begin{bmatrix}
-0 & 0 \\
-\frac{1}{L} & 0
-\end{bmatrix}
-\quad \text{y} \quad
-B_{12} = \begin{pmatrix}
-0 & -\frac{1}{C_c} \\
-0 & \frac{R_c}{L}
-\end{pmatrix}
-\]
-
-\vspace{-0.5cm}
-\[
-B_{21} = \begin{bmatrix}
-0 & 0 \\
-0 & 0
-\end{bmatrix}
-\quad \text{y} \quad
-B_{22} = \begin{bmatrix}
-0 & -\frac{1}{C_c} \\
-0 & \frac{R_c}{L}
-\end{bmatrix}
-\]
-
-Escribiendo el sistema en tiempo continuo:
-
-\vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        \dfrac{d}{dt}u_C\\
-        \dfrac{d}{dt}i_L
+    B = \begin{bmatrix}
+        \dfrac{d}{L}\\
+        0
     \end{bmatrix}
-    =
-    \begin{bmatrix}
-        0 & \dfrac{1}{C}\\
-        -\dfrac{1}{L} & -\dfrac{R_C + R_L}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
-    +
-    \begin{bmatrix}
-        0 & -\dfrac{I_0}{C_C}\\
-        -\dfrac{V_g}{L} & -\dfrac{R_C}{L}
-    \end{bmatrix}
-    \cdot
-    \begin{bmatrix}
-        d\\
-        I_0
-    \end{bmatrix} 
 \end{equation}
 
-\vspace{-0.5cm}
 \begin{equation}
-    \begin{bmatrix}
-        u_0\\
-        i_L
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        1 & R_C\\
+    C = \begin{bmatrix}
         0 & 1
     \end{bmatrix}
-    \begin{bmatrix}
-        u_C\\
-        i_L
-    \end{bmatrix}
 \end{equation}
 
-Dado que B es el resultado promediado del sistema conmutado y los valores del voltaje de entrada,
-el capacitor, la resistencia y el inductor son fijos, entonces B será decidido por el ciclo de
-trabajo $d$. El valor de B cambiará cuando cambie el ciclo de trabajo $d$.
+Lo que nos deja las siguientes ecuaciones de estado:
 
+\vspace{-0.5cm}
+\begin{equation}
+    x'_1 = -\dfrac{1}{L} x_2 + \dfrac{d}{L} u_1
+\end{equation}
 
+\vspace{-0.5cm}
+\begin{equation}
+    x'_2 = \dfrac{1}{C} x_1 - \dfrac{1}{RC} x_2 
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    y = x_2 
+\end{equation}
 
 \subsubsection*{\it{Identificación del sistema}}
 \vspace{-0.25cm}
