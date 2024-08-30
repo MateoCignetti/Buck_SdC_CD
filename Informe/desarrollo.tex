@@ -128,7 +128,7 @@ El sistema conmutado se puede modelar como un sistema promediado.
     \label{fig:modelado_circuito}
 \end{figure}
 
-Primero, la fuente se incluye en el circuito cuando el interruptor esta conectado al nodo 1.
+Primero, la fuente se incluye en el circuito cuando el interruptor está conectado al nodo 1.
 
 \begin{figure}[H]
     \centering
@@ -163,23 +163,26 @@ Reordenando nos queda:
     x'_2 = \dfrac{1}{C}x_1 - \dfrac{1}{RC} x_2 
 \end{equation}
 
-De aqui podemos obtener las matrices $A_1$ y $B_1$:
+De aquí podemos obtener las matrices $A_1$ y $B_1$:
 
 \begin{equation}
     A_1 = \begin{bmatrix}
         0 & -\dfrac{1}{L}\\
+        \\
         \dfrac{1}{C} & -\dfrac{1}{RC}
     \end{bmatrix}
 \end{equation}
 
+\vspace{-0.5cm}
 \begin{equation}
     B_1 = \begin{bmatrix}
         \dfrac{1}{L}\\
+        \\
         0
     \end{bmatrix}
 \end{equation}
 
-Cuando el interruptor esta conectado al nodo dos, las fuente de tensión 
+Cuando el interruptor está conectado al nodo dos, la fuente de tensión 
 no se incluye en el circuito.
 
 \begin{figure}[H]
@@ -192,35 +195,37 @@ no se incluye en el circuito.
 
 Nuevamente aplicando ley de Kirchoff, y reordenando las ecuaciones:
 
-\vspace{-0.5cm}
+\vspace{-0.75cm}
 \begin{equation}
     0 = Lx'_1 + x_2
 \end{equation}
 
-\vspace{-0.5cm}
+\vspace{-0.75cm}
 \begin{equation}
     Cx'_2 = x_1 - \dfrac{1}{R} x_2 
 \end{equation}
 
-\vspace{-0.5cm}
+\vspace{-0.75cm}
 \begin{equation}
     x'_1 = -\dfrac{1}{L} x_2
 \end{equation}
 
-\vspace{-0.5cm}
+\vspace{-0.75cm}
 \begin{equation}
     x'_2 = \dfrac{1}{C} x_1 - \dfrac{1}{RC} x_2 
 \end{equation}
 
-De aqui podemos obtener las matrices $A_2$ y $B_2$:
+De aquí podemos obtener las matrices $A_2$ y $B_2$:
 
 \begin{equation}
     A_2 = \begin{bmatrix}
         0 & -\dfrac{1}{L}\\
+        \\
         \dfrac{1}{C} & -\dfrac{1}{RC}
     \end{bmatrix}
 \end{equation}
 
+\vspace{-0.5cm}
 \begin{equation}
     B_2 = \begin{bmatrix}
         0\\
@@ -228,7 +233,7 @@ De aqui podemos obtener las matrices $A_2$ y $B_2$:
     \end{bmatrix}
 \end{equation}
 
-Para los dos casos, las salida es igual a la tension en el capacitor, $x_2$:
+Para los dos casos, la salida es igual a la tensión en el capacitor, $x_2$:
 
 \vspace{-0.5cm}
 \begin{equation}
@@ -245,7 +250,7 @@ Para los dos casos, las salida es igual a la tension en el capacitor, $x_2$:
 \textbf{Obtención del sistema promediado:}
 
 La solución total se puede obtener promediando en espacio de estados, esto es, sumando los términos 
-para cada análisis del modo lineal conmutado. Como solo cambia la matriz B, se hace sobre esa unica matriz.
+para cada análisis del modo lineal conmutado. Como solo cambia la matriz B, se hace sobre esa única matriz.
 Suponiendo el ciclo de trabajo d, tenemos:
 
 \vspace{-0.5cm}
@@ -258,17 +263,21 @@ Sustituyendo obtenemos la matriz A, B y C del sistema:
 \begin{equation}
     A = \begin{bmatrix}
         0 & -\dfrac{1}{L}\\
+        \\
         \dfrac{1}{C} & -\dfrac{1}{RC}
     \end{bmatrix}
 \end{equation}
 
+\vspace{-0.5cm}
 \begin{equation}
     B = \begin{bmatrix}
         \dfrac{d}{L}\\
+        \\
         0
     \end{bmatrix}
 \end{equation}
 
+\vspace{-0.5cm}
 \begin{equation}
     C = \begin{bmatrix}
         0 & 1
@@ -287,6 +296,7 @@ Lo que resulta en el siguiente sistema de estado:
         =
         \begin{bmatrix}
             0  &   -\dfrac{1}{L}\\
+            \\
             \dfrac{1}{C} & -\dfrac{1}{RC}
         \end{bmatrix}
         \cdot
@@ -297,6 +307,7 @@ Lo que resulta en el siguiente sistema de estado:
         +
         \begin{bmatrix}
             \dfrac{d}{L} \\
+            \\
             0
         \end{bmatrix}
         \cdot
@@ -319,6 +330,8 @@ Lo que resulta en el siguiente sistema de estado:
 Aunque el sistema original es lineal para toda condición dada de conmutación, el sistema que resulta 
 en general es no lineal debido a que el ciclo de trabajo d es en general una función de $x_1$, $x_2$ y $u_1$. \parencite{RASHID}
 
+Se procede a implementar el circuito físico para luego obtener un modelo del sistema lineal e invariable en el tiempo mediante
+identificación empírica.
 
 \subsubsection*{\it{Circuito}}
 \vspace{-0.25cm}
@@ -327,39 +340,55 @@ Para construir el circuito físico, primero se realizó el siguiente diagrama:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[height=4.5cm]{diagrama_circuito.png}
+    \includegraphics[width=\textwidth]{diagrama_circuito.png}
     \vspace{-0.25cm}
     \caption{Diagrama de circuito.}
     \label{fig:diagrama_circuito}
 \end{figure}
 
-Los componentes fuero seleccionados según disponibilidad y costos, teniendo en cuenta que cumplan los requerimientos del circuito.
-El divisor resistivo que conecta la retroalimentación al microcontrolador esta diseñado para que entregue una 
-tensión de 0 V a 3,3 V. Para ello se realizo una tabla con valores de entrada y salida:
+
+Los componentes fueron seleccionados según disponibilidad y costos, teniendo en cuenta que cumplan los requerimientos del circuito.
+El IRF4905 es un transistor MOSFET canal P que se utiliza como interruptor en el convertidor. Su baja resistencia Rds(on) cuando está activado y 
+su capacidad para manejar corrientes altas lo hacen adecuado para aplicaciones de conversión de potencia.
+
+El filtro LC se diseña para rechazar la frecuencia de conmutación del transistor (establecida arbitrariamente en 19 kHz),
+resultando en una frecuencia de corte de 770 Hz. Además, se coloca un filtro RC a la salida de la retroalimentación, con una frecuencia
+de corte de 100 Hz para filtrar cualquier dinámica indeseada del sistema que no haya sido eliminada por el filtro LC. 
+
+El divisor resistivo que conecta la retroalimentación al microcontrolador está diseñado para que entregue una 
+tensión de 0 V a 3,3 V. Para ello se realizó una tabla con valores de entrada y salida:
 
 \begin{table}[H]
     \centering
     \begin{tabular}{|c|c|}
     \hline
-    Voltaje de retroalimentación (V) & Tensión en la carga (V) \\ \hline
+    Voltaje de retroalimentación (V) & Voltaje en la carga (V) \\ \hline
     0                                & 0                       \\
-    0.27                             & 1                       \\
-    0.55                             & 2                       \\
-    0.83                             & 3.05                    \\
-    1.07                             & 3.9                     \\
-    1.38                             & 5.01                    \\
-    1.66                             & 6.03                    \\
-    1.95                             & 7.09                    \\
-    2.19                             & 8.02                    \\
-    2.44                             & 9.06                    \\
-    2.65                             & 9.96                    \\
-    2.87                             & 11                      \\
-    3.04                             & 12                      \\ \hline
+    0,27                             & 1                       \\
+    0,55                             & 2                       \\
+    0,83                             & 3,05                    \\
+    1,07                             & 3,9                     \\
+    1,38                             & 5,01                    \\
+    1,66                             & 6,03                    \\
+    1,95                             & 7,09                    \\
+    2,19                             & 8,02                    \\
+    2,44                             & 9,06                    \\
+    2,65                             & 9,96                    \\
+    2,87                             & 11                      \\
+    3,04                             & 12                      \\ \hline
     \end{tabular}
     \label{tab:calibración_fb}
     \vspace{-0.25cm}
     \caption{Calibración de voltaje de retroalimentación}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=6cm]{circuito.jpg}
+    \vspace{-0.25cm}
+    \caption{Circuito montado en placa perforada, con carga resistiva montada.}
+    \label{fig:circuito}
+\end{figure}
 
 \subsubsection*{\it{Identificación del sistema}}
 \vspace{-0.25cm}
@@ -386,14 +415,14 @@ los valores en un archivo csv para luego introducir en el System Identification 
         \centering
         \includegraphics[height=8cm]{identificacion_io.eps}
         %\vspace{-0.25cm}
-        \caption{Vista completa de la señal de identificación.}
+        \caption{Vista completa de la señal de evaluación y validación.}
         \label{fig:identificacion_io_gral}
     \end{subfigure}
     \begin{subfigure}[b]{\textwidth}
         \centering
         \includegraphics[height=8cm]{identificacion_zoom.eps}
         %\vspace{-0.25cm}
-        \caption{Vista acercada de la señal de identificación.}
+        \caption{Vista acercada de la señal de evaluación.}
         \label{fig:identificacion_io_zoom}
     \end{subfigure}
 
@@ -433,12 +462,12 @@ se estima un modelo en espacios de estado de orden 3 utilizando la función \tex
 \vspace{-0.5cm}
 
 Como se puede observar en la Figura \ref{fig:identificacion_resultados}, el modelo estimado coincide
-con la respuesta medida del sistema (señal de validación) en un 64,     89\%. Respecto a la señal de 
+con la respuesta medida del sistema (señal de validación) en un 64,89\%. Respecto a la señal de 
 evaluación, coincide en un 92,61\%. Además, el análisis residual del modelo estimado
 demuestra un buen resultado en la autocorrelación de residuales para la salida y para la correlación
 cruzada de residuales entre la entrada y la salida.
 
-El modelo estimado en espacios de estado es el siguiente:
+El modelo estimado en espacios de estado discreto es el siguiente:
 
 \vspace{-0.5cm}
 \begin{equation}
@@ -449,36 +478,25 @@ El modelo estimado en espacios de estado es el siguiente:
             \dot{x_3}
         \end{bmatrix}
         =
-        \begin{bmatrix}
-            0.9933   &   -0.01093    &   -0.0006102\\
-            0.1064   &   0.8617      &   -0.2955   \\
-            0.005556 &   -0.02709    &   -0.6608            
-        \end{bmatrix}
+        A
+        \cdot
         \begin{bmatrix}
             x_1 \\
             x_2 \\
             x_3
         \end{bmatrix}
         +
-        \begin{bmatrix}
-            0.000438   \\
-            -0.005044  \\
-            0.02667
-        \end{bmatrix}
+        B
+        \cdot
         u 
         +
-        \begin{bmatrix}
-            0.002016 \\
-            -0.0145   \\
-            -0.008185
-        \end{bmatrix}
+        K
+        \cdot
         e
         \\
         y =
-        \begin{bmatrix}
-            188.4 & 2.647 & 0.7808
-        \end{bmatrix}
-
+        C
+        \cdot
         \begin{bmatrix}
             x_1 \\
             x_2 \\
@@ -490,25 +508,51 @@ El modelo estimado en espacios de estado es el siguiente:
     \end{cases}
 \end{equation}
 
+Donde:
+
+\vspace{-0.5cm}
+\begin{equation}
+    A = \begin{bmatrix}
+        0.9933   &   -0.01093    &   -0.0006102\\
+        0.1064   &   0.8617      &   -0.2955   \\
+        0.005556 &   -0.02709    &   -0.6608            
+    \end{bmatrix}
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    B = \begin{bmatrix}
+        0.000438   \\
+        -0.005044  \\
+        0.02667
+    \end{bmatrix}
+\end{equation}\
+
+\vspace{-0.5cm}
+\begin{equation}
+    C = \begin{bmatrix}
+        188.4 & 2.647 & 0.7808
+    \end{bmatrix}
+\end{equation}
+
+\vspace{-0.75cm}
+\begin{equation}
+    K = \begin{bmatrix}
+        0.002016 \\
+        -0.0145   \\
+        -0.008185
+    \end{bmatrix}
+\end{equation}
+
 El mismo se puede representar en función de transferencia luego de transformarlo mediante MATLAB:
 
 \vspace{-0.5cm}
 \begin{equation}
-    H(s) = \dfrac{3062\ s + 1.456 \times 10^7}{s^2 + 1.199 \times 10^4\ s + 1.722 \times 10^6}
+    H(z) = \dfrac{0.09\ z^{-1} - 0.06406\ z^{-2} + 0.02537\ z^{-3}}{1 - 1.194\ z^{-1} - 0.3768\ z^{-2} + 0.5743\ z^{-3}}
 \end{equation}
 \vspace{-0.5cm}
 
-La planta discretizada mediante retención de orden cero (zoh), con un tiempo de muestreo de 200
-microsegundos es:
-
-\vspace{-0.5cm}
-\begin{equation}
-    H(z) = \dfrac{0.3798\ z - 0.1602}{z^2 - 1.065\ z + 0.09091}
-\end{equation}
-\vspace{-0.5cm}
-
-A continuación se grafican las respuestas al impulso y al escalón, el mapa de polos y ceros y el lugar
-geométrico de las raíces.
+A continuación se grafican las respuestas temporal y en frecuencia del sistema identificado:
 
 \begin{figure}[H]
     \centering
@@ -529,9 +573,36 @@ geométrico de las raíces.
     \end{subfigure}
 
     \vspace{-0.25cm}
-    \caption{Análisis de la respuesta temporal del sistema estimado.}
-    \label{fig:estimado_respuestas}
+    \caption{Respuesta temporal del sistema estimado.}
+    \label{fig:estimado_temporal}
 \end{figure}
+\vspace{-0.5cm}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_bode.eps}
+        %\vspace{-0.25cm}
+        \caption{Diagrama de Bode.}
+        \label{fig:estimado_bode}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{estimado_nyquist.eps}
+        %\vspace{-0.25cm}
+        \caption{Diagrama de Nyquist.}
+        \label{fig:estimado_nyquist}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta en frecuencia del sistema estimado.}
+    \label{fig:estimado_frecuencia}
+\end{figure}
+\vspace{-0.5cm}
+
+\subsubsection*{\it{Análisis de estabilidad}}
 \vspace{-0.5cm}
 
 \begin{figure}[H]
@@ -561,5 +632,136 @@ geométrico de las raíces.
 La respuesta al impulso del sistema converge a cero cuando el tiempo tiende al infinito.
 En la respuesta al escalón, el sistema converge a un valor.
 La ubicación de polos y el lugar geométricos de las raíces están ubicados dentro 
-del circulo unitario en el plano z. Debido a estas características se determina que el sistema 
-es estable.
+del círculo unitario en el plano z. Además, en la figura \ref{fig:estimado_nyquist}, la curva no rodea
+el punto crítico (-1, 0). Debido a estas características se determina que el sistema es estable.
+
+En la figura \ref{fig:estimado_rlocus}, se observa que para ciertos parámetros del sistema, un polo puede
+ubicarse por fuera del círculo unitario en el plano z, resultando en un sistema inestable.
+
+\subsubsection*{\it{Implementación en microcontrolador}}
+\vspace{-0.25cm}
+
+Para implementar el sistema de control en el microcontrolador, se implementó un timer de 200 microsegundos,
+que llama a una función de control cada vez que termina. Este temporizador corre periódicamente durante el funcionamiento
+del programa. Se configura también un canal de PWM para controlar el MOSFET del convertidor buck, con frecuencia de 19 kHz
+y ciclo de trabajo variable.
+
+En la función de control, se mide el valor del ADC (convertidor analógico a digital) para obtener el
+valor de setpoint, que varía de 0 V a 10 V. Luego, se mide por el ADC el valor de la retroalimentación, que, aplicada
+a una curva de calibración, se obtiene el valor de tensión de salida. El setpoint restado a este valor resulta en
+el error que, ingresado en la fórmula de ecuación en diferencias del controlador PID con filtro derivativo, se obtiene
+la señal de control. Esta señal se aplica al PWM (modulación por ancho de pulso) del pin de salida que controla
+el MOSFET del convertidor buck.
+
+La programación se realizó mediante esp-idf, utilizando la referencia de API oficial de Espressif para el ESP32-S3. \parencite{ESPIDF}
+
+\subsubsection*{\it{Sintonización del controlador PID}}
+\vspace{-0.25cm}
+
+Para la sintonización del controlador PID, se utilizó la herramienta de MATLAB PID Tuner. A partir de valores obtenidos,
+se modifican levemente para obtener una respuesta deseada. En la figura siguiente, se observa como ejemplo la configuración
+de una respuesta lenta y robusta:
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_2_tuner.png}
+        %\vspace{-0.25cm}
+        \caption{PID Tuner}
+        \label{fig:pid2_tuner}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_2.eps}
+        %\vspace{-0.25cm}
+        \caption{Tensión de salida.}
+        \label{fig:pid2_micro}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Sintonización con Kp=0,06; Ki=3.47; Kd=-0.0002; N=0,02.}
+    \label{fig:sintonizacion}
+\end{figure}
+\vspace{-0.5cm}
+
+\subsubsection*{\it{Resultados}}
+\vspace{-0.25cm}
+
+A continuación se presentan distintas figuras con diferentes valores de constantes Kp, Ki, Kd y N:
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_1.eps}
+        %\vspace{-0.25cm}
+        \caption{Salida (V) según microcontrolador.}
+        \label{fig:pid1_micro}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_1_osc.png}
+        %\vspace{-0.25cm}
+        \caption{Retroalimentación (V) según osciloscopio.}
+        \label{fig:pid_1_osciloscopio}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta temporal con Kp=0,02; Ki=9.78; Kd=0; N=92,75.}
+    \label{fig:pid1_osciloscopio}
+\end{figure}
+\vspace{-0.5cm}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_15_output.eps}
+        %\vspace{-0.25cm}
+        \caption{Señal de salida (Volts).}
+        \label{fig:pid_15_output}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_15_pwmbits.eps}
+        %\vspace{-0.25cm}
+        \caption{Señal de control (duty cycle en bits).}
+        \label{fig:pid_15_pwm}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta temporal con Kp=1; Ki=5; Kd=0; N=0.}
+    \label{fig:pid15_osciloscopio}
+\end{figure}
+\vspace{-0.5cm}
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_3_output.eps}
+        %\vspace{-0.25cm}
+        \caption{Señal de salida (Volts).}
+        \label{fig:pid3_micro}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pid_3_pwm.eps}
+        %\vspace{-0.25cm}
+        \caption{Señal de control (duty cycle en bits).}
+        \label{fig:pid_3_pwm}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta temporal con Kp=0,42; Ki=33.16; Kd=8,3$\times 10^{-6}$; N=0,00012}
+    \label{fig:pid3}
+\end{figure}
+\vspace{-0.5cm}
+
+Estas últimas gráficas poseen un ruido excepcional debido a la mala calidad de la fuente disponible en el hogar,
+a comparación de la fuente de laboratorio utilizada en las mediciones anteriores.
