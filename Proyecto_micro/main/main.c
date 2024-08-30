@@ -52,7 +52,8 @@ int pwm_output_bits = 0;
 //
 
 // Feedback correction coefficients
-const float fb_curve_coefficients[4] = {-0.1436, 4.2716, -0.6413, 0.1787};
+//const float fb_curve_coefficients[4] = {-0.1436, 4.2716, -0.6413, 0.1787};
+const float fb_curve_coefficients[4] = {-0.0358, 4.0233, -0.487, 0.1506};
 //
 
 void timer_callback(void* arg);
@@ -132,15 +133,19 @@ void timer_callback(void* arg){
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
     fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
-
+    if(fb_value_v < 0.0){
+        fb_value_v = 0.0;
+    } else if(fb_value_v > 12.0){
+        fb_value_v = 12.0;
+    }
 
     //printf("Setpoint: %.2f V \n", setpoint_v);
     //printf("Feedback: %.2f V \n", fb_value_v);
-    //setpoint_v = 7.6;
+    setpoint_v = 6.2;
     input_array[0] = setpoint_v - fb_value_v;
     output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
 
-    pwm_output_bits = ((int) output_array[0]) * 4095 / 12;
+    pwm_output_bits = (int) (output_array[0] * 4095.0 / 12.0);
 
     if(pwm_output_bits > 4095){
         pwm_output_bits = 4095;

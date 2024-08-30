@@ -8,39 +8,32 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define SAMPLE_TIME_US 500
-#define SAMPLE_SIZE 5000  // 5000 samples at 200us each = 1 second
+#define SAMPLE_TIME_US 200
+#define SAMPLE_SIZE 2000  // 5000 samples at 200us each = 1 second
 #define PWM_FREQUENCY 19000
 #define PWM_GPIO_NUM GPIO_NUM_4
 #define POT_CHANNEL ADC_CHANNEL_4
 #define FB_CHANNEL ADC_CHANNEL_5
 #define SETPOINT_V 5.5
 
-float output[SAMPLE_SIZE];
+float output[SAMPLE_SIZE];;
+float pwm[SAMPLE_SIZE];
 
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_handle;
 esp_timer_handle_t timer_handle; // May need to implement timer stop outside of callback function
-
 
 int fb_value_mv = 0;
 float fb_value_v = 0.0;
 int value_index = 0;
 
 // PID constants and variables
-const float Kp = 1;
-const float Ki = 5;
-const float Kd = 0;
+const float Kp = 0.41794;
+const float Ki = 33.16;
+const float Kd = -0.000008331;
 const float Ts = SAMPLE_TIME_US / 1000000.0;
-const float Nc = 2233.8172;
-//const int Ts_ms = Ts * 1000;
+const float Nc = 0.00012009;
 
-/*const float a_coefficients[3] = {0, 0, -1};
-const float b_coefficients[3] = {
-    Kp + (Ki * Ts / 2) + (2 * Kd / Ts),
-    Ki * Ts - (4 * Kd / Ts),
-    -Kp + (Ki * Ts / 2) + (2 * Kd / Ts)
-};*/
 const float a_coefficients[3] = {
     1,
     -2 + Nc * Ts,
@@ -146,19 +139,18 @@ void timer_callback(void* arg){
     output[value_index] = fb_value_v;
 
     setpoint_v = SETPOINT_V;
-    //printf("Setpoint: %.2f V \n", setpoint_v);
-    //printf("Feedback: %.2f V \n", fb_value_v);
-    //setpoint_v = 7.6;
+
     input_array[0] = setpoint_v - fb_value_v;
     output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
 
-    pwm_output_bits = ((int) output_array[0]) * 4095 / 12;
+    pwm_output_bits = (int) (output_array[0] * 4095.0 / 12.0);
 
     if(pwm_output_bits > 4095){
         pwm_output_bits = 4095;
     } else if(pwm_output_bits < 0) {
         pwm_output_bits = 0;
     }
+    pwm[value_index] = pwm_output_bits;
     
     ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
     input_array[2] = input_array[1];
@@ -172,7 +164,19 @@ void timer_callback(void* arg){
 void print_output_values(){
     printf("START\n");
     for(int i = 0; i < SAMPLE_SIZE; i++){
+        if(output[i] < 0){
+            output[i] = 0;
+        }
         printf("%.2f\n", output[i]);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    printf("END\n");
+
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+    printf("START\n");
+    for(int i = 0; i < SAMPLE_SIZE; i++){
+        printf("%.2f\n", pwm[i]);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     printf("END\n");
