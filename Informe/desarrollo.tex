@@ -2,10 +2,6 @@
 \vspace{-0.25cm}
 \justifying
 
-Desarrollo aquí.
-
-
-
 \subsubsection*{\it{Sistema de control PID}}
 \vspace{-0.25cm}
 Para obtener una tensión de salida constante, sin importar variaciones en la tensión de entrada del
@@ -154,6 +150,7 @@ Aplicando ley de Kirchoff obtenemos:
     Cx'_2 = x_1 - \dfrac{1}{R} x_2 
 \end{equation}
 
+Donde $x_1$ es la corriente que circula por el inductor, $x_2$ es la tensión en el capacitor y $u_1$ la tensión de entrada.
 Reordenando nos queda:
 
 \vspace{-0.5cm}
@@ -278,22 +275,50 @@ Sustituyendo obtenemos la matriz A, B y C del sistema:
     \end{bmatrix}
 \end{equation}
 
-Lo que nos deja las siguientes ecuaciones de estado:
+Lo que resulta en el siguiente sistema de estado:
 
 \vspace{-0.5cm}
 \begin{equation}
-    x'_1 = -\dfrac{1}{L} x_2 + \dfrac{d}{L} u_1
+    \begin{cases}
+        \begin{bmatrix}
+            \dot{x_1}\\
+            \dot{x_2}
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+            0  &   -\dfrac{1}{L}\\
+            \dfrac{1}{C} & -\dfrac{1}{RC}
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \dfrac{d}{L} \\
+            0
+        \end{bmatrix}
+        \cdot
+        u_1 
+        \\
+        \\
+        y =
+        \begin{bmatrix}
+            0 & 1
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2
+        \end{bmatrix}
+
+    \end{cases}
 \end{equation}
 
-\vspace{-0.5cm}
-\begin{equation}
-    x'_2 = \dfrac{1}{C} x_1 - \dfrac{1}{RC} x_2 
-\end{equation}
+Aunque el sistema original es lineal para toda condición dada de conmutación, el sistema que resulta 
+en general es no lineal debido a que el ciclo de trabajo d es en general una función de $x_1$, $x_2$ y $u_1$. \parencite{RASHID}
 
-\vspace{-0.5cm}
-\begin{equation}
-    y = x_2 
-\end{equation}
 
 \subsubsection*{\it{Circuito}}
 \vspace{-0.25cm}
@@ -308,6 +333,7 @@ Para construir el circuito físico, primero se realizó el siguiente diagrama:
     \label{fig:diagrama_circuito}
 \end{figure}
 
+Los componentes fuero seleccionados según disponibilidad y costos, teniendo en cuenta que cumplan los requerimientos del circuito.
 El divisor resistivo que conecta la retroalimentación al microcontrolador esta diseñado para que entregue una 
 tensión de 0 V a 3,3 V. Para ello se realizo una tabla con valores de entrada y salida:
 
@@ -344,9 +370,9 @@ mide la respuesta del mismo.
 En esta ocasión, se optó por utilizar una señal de entrada PRBS
 (Pseudo Random Binary Sequence, en español Secuencia Binaria Pseudo Aleatoria). La misma intenta
 cubrir todo el rango de frecuencias posibles, y es útil para identificar sistemas lineales y no lineales.
-Utilizando MATLAB, se genera una señal PRBS de orden 10, con un tiempo de muestreo de 200 microsegundos,
-y una duración de 3 períodos. Esto significa una secuencia de 1023 valores en 0,2046 segundos repetida tres veces.
-Es decir, 3069 valores en un rango de 0 a 0,6138 segundos.
+Utilizando MATLAB, se genera una señal PRBS con un tiempo de muestreo de 200 microsegundos, frecuencia máxima
+800 Hz, y una duración de 10 períodos. Esta señal es una secuencia de 186 valores en 0,0372 segundos repetida diez veces.
+Es decir, 1860 valores en un rango de 0 a 0,372 segundos.
 
 Se programa el microcontrolador para reproducir la señal PRBS en el convertidor Buck, medir la salida
 del sistema y luego enviar los datos mediante comunicación serial. A través de un programa en Python, se guardan
@@ -358,14 +384,14 @@ los valores en un archivo csv para luego introducir en el System Identification 
 
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[height=6cm]{identificacion_io.png}
+        \includegraphics[height=8cm]{identificacion_io.eps}
         %\vspace{-0.25cm}
         \caption{Vista completa de la señal de identificación.}
         \label{fig:identificacion_io_gral}
     \end{subfigure}
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[height=6cm]{identificacion_zoom.png}
+        \includegraphics[height=8cm]{identificacion_zoom.eps}
         %\vspace{-0.25cm}
         \caption{Vista acercada de la señal de identificación.}
         \label{fig:identificacion_io_zoom}
@@ -377,16 +403,16 @@ los valores en un archivo csv para luego introducir en el System Identification 
 \end{figure}
 \vspace{-0.5cm}
 
-Se seleccionan los primeros 2455 valores (80\% de los valores totales) como la señal de evaluación
-y los restantes 614 valores (20\% de los valores totales) como la señal de validación. Finalmente,
-se estima un modelo en espacios de estado de orden 2 utilizando la función \textit{N4SID} del System Identification Toolbox:
+Se seleccionan los primeros 1488 valores (80\% de los valores totales) como la señal de evaluación
+y los restantes 372 valores (20\% de los valores totales) como la señal de validación. Finalmente,
+se estima un modelo en espacios de estado de orden 3 utilizando la función \textit{N4SID} del System Identification Toolbox:
 
 \begin{figure}[H]
     \centering
 
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=10cm]{identificacion_comparacion.png}
+        \includegraphics[width=10cm]{identificacion_comparacion.eps}
         %\vspace{-0.25cm}
         \caption{Comparación del modelo estimado con la respuesta medida.}
         \vspace{0.25cm}
@@ -394,7 +420,7 @@ se estima un modelo en espacios de estado de orden 2 utilizando la función \tex
     \end{subfigure}
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=10cm]{identificacion_residuos.png}
+        \includegraphics[width=10cm]{identificacion_residuos.eps}
         %\vspace{-0.25cm}
         \caption{Análisis residual del modelo estimado.}
         \label{fig:identificacion_residuos}
@@ -407,10 +433,10 @@ se estima un modelo en espacios de estado de orden 2 utilizando la función \tex
 \vspace{-0.5cm}
 
 Como se puede observar en la Figura \ref{fig:identificacion_resultados}, el modelo estimado coincide
-con la respuesta medida del sistema (señal de evaluación) en un 73,39\%. Respecto a la señal de 
-validación, coincide en un 65,8\%. Además, el análisis residual del modelo estimado
-demuestra un buen resultado en la autocorrelación de residuales para la salida y un resultado
-satisfactorio para la correlación cruzada de residuales entre la entrada y la salida.
+con la respuesta medida del sistema (señal de validación) en un 64,     89\%. Respecto a la señal de 
+evaluación, coincide en un 92,61\%. Además, el análisis residual del modelo estimado
+demuestra un buen resultado en la autocorrelación de residuales para la salida y para la correlación
+cruzada de residuales entre la entrada y la salida.
 
 El modelo estimado en espacios de estado es el siguiente:
 
@@ -418,42 +444,45 @@ El modelo estimado en espacios de estado es el siguiente:
 \begin{equation}
     \begin{cases}
         \begin{bmatrix}
-            \dot{x_1}\\
-            \dot{x_2}
+            \dot{x_1}   \\
+            \dot{x_2}   \\
+            \dot{x_3}
         \end{bmatrix}
         =
         \begin{bmatrix}
-            -213.1  &   279.1\\
-            2819    &   -1.178\times 10^4
+            0.9933   &   -0.01093    &   -0.0006102\\
+            0.1064   &   0.8617      &   -0.2955   \\
+            0.005556 &   -0.02709    &   -0.6608            
         \end{bmatrix}
-        \cdot
         \begin{bmatrix}
             x_1 \\
-            x_2
+            x_2 \\
+            x_3
         \end{bmatrix}
         +
         \begin{bmatrix}
-            -28.98 \\
-            294,4
+            0.000438   \\
+            -0.005044  \\
+            0.02667
         \end{bmatrix}
-        \cdot
         u 
         +
         \begin{bmatrix}
-            -11.92 \\
-            -95.37
+            0.002016 \\
+            -0.0145   \\
+            -0.008185
         \end{bmatrix}
-        \cdot
         e
         \\
         y =
         \begin{bmatrix}
-            -56.54 & 4.834
+            188.4 & 2.647 & 0.7808
         \end{bmatrix}
-        \cdot
+
         \begin{bmatrix}
             x_1 \\
-            x_2
+            x_2 \\
+            x_3
         \end{bmatrix}
         +
         e
@@ -486,14 +515,14 @@ geométrico de las raíces.
 
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{estimado_impulse.png}
+        \includegraphics[width=\textwidth]{estimado_impulse.eps}
         %\vspace{-0.25cm}
         \caption{Respuesta al impulso.}
         \label{fig:estimado_impulse}
     \end{subfigure}
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{estimado_step.png}
+        \includegraphics[width=\textwidth]{estimado_step.eps}
         %\vspace{-0.25cm}
         \caption{Respuesta al escalón.}
         \label{fig:estimado_step}
@@ -510,14 +539,14 @@ geométrico de las raíces.
 
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{estimado_pzmap.png}
+        \includegraphics[width=\textwidth]{estimado_pzmap.eps}
         %\vspace{-0.25cm}
         \caption{Mapa de polos y ceros.}
         \label{fig:estimado_pzmap}
     \end{subfigure}
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{estimado_rlocus.png}
+        \includegraphics[width=\textwidth]{estimado_rlocus.eps}
         %\vspace{-0.25cm}
         \caption{Lugar geométrico de las raíces.}
         \label{fig:estimado_rlocus}
@@ -530,7 +559,7 @@ geométrico de las raíces.
 \vspace{-0.5cm}
 
 La respuesta al impulso del sistema converge a cero cuando el tiempo tiende al infinito.
-En la respuesta al escalon, el sistema converge a un valor.
-La ubicación de polos y el lugar geométricos de las raices estan ubicados dentro 
-del circulo unitario en el plano z. Debido a estas caracteristicas se determina que el sistema 
+En la respuesta al escalón, el sistema converge a un valor.
+La ubicación de polos y el lugar geométricos de las raíces están ubicados dentro 
+del circulo unitario en el plano z. Debido a estas características se determina que el sistema 
 es estable.
