@@ -108,7 +108,7 @@ Finalmente, se puede obtener la ecuación en diferencias del controlador PID:
 \vspace{-0.5cm}
 \begin{multline}
         u[n] = (K_p + K_d N)\ e[n] + (-2 K_p - 2 K_d N + K_i T_s + K_p N T_s)\ e[n-1]\  + \\
-    (K_p + K_d N - K_i T_s - K_p N T_s + K_i N {T_s}^2)\ e[n-2] - (2 - N T_s)\ u[n-1] - (1 - N T_s)\ u[n-2]
+    (K_p + K_d N - K_i T_s - K_p N T_s + K_i N {T_s}^2)\ e[n-2] - (-2 + N T_s)\ u[n-1] - (1 - N T_s)\ u[n-2]
 \end{multline}
 \vspace{-0.5cm}
 
@@ -384,7 +384,7 @@ tensión de 0 V a 3,3 V. Para ello se realizó una tabla con valores de entrada 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[height=5cm]{curva_calibracion.png}
+    \includegraphics[height=6.5cm]{curva_calibracion.png}
     \vspace{-0.25cm}
     \caption{Curva de calibración de voltaje de retroalimentación.}
     \label{fig:calibracion}
