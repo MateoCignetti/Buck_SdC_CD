@@ -1,41 +1,39 @@
-//#include "freertos/FreeRTOS.h"
-//#include "freertos/task.h"
-#include "driver/ledc.h"
-#include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
-#include "math.h"
+#include "driver/gpio.h"
+#include "driver/ledc.h"
 #include "esp_timer.h"
+#include "math.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+#define SAMPLE_TIME_US 200
+#define SAMPLE_SIZE 2000  // 5000 samples at 200us each = 1 second
 #define PWM_FREQUENCY 19000
-#define TIMER_PERIOD_US 200
 #define PWM_GPIO_NUM GPIO_NUM_4
 #define POT_CHANNEL ADC_CHANNEL_4
 #define FB_CHANNEL ADC_CHANNEL_5
+#define SETPOINT_V 6.0
+
+float output[SAMPLE_SIZE];;
+float pwm[SAMPLE_SIZE];
 
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_handle;
+esp_timer_handle_t timer_handle; // May need to implement timer stop outside of callback function
 
 int fb_value_mv = 0;
 float fb_value_v = 0.0;
-int setpoint_mv = 0;
-float setpoint_v = 0.0;
+int value_index = 0;
 
 // PID constants and variables
-const float Kp = 0.57882;
-const float Ki = 181.8022;
-const float Kd = -0.00019491;
-const float Ts = TIMER_PERIOD_US / 1000000.0;
-const float Nc = 2233.8172;
-//const int Ts_ms = Ts * 1000;
+const float Kp = 0.5381;
+const float Ki = 52.39;
+const float Kd = 0.0002741;
+const float Ts = SAMPLE_TIME_US / 1000000.0;
+const float Nc = 543.1830527;
 
-/*const float a_coefficients[3] = {0, 0, -1};
-const float b_coefficients[3] = {
-    Kp + (Ki * Ts / 2) + (2 * Kd / Ts),
-    Ki * Ts - (4 * Kd / Ts),
-    -Kp + (Ki * Ts / 2) + (2 * Kd / Ts)
-};*/
 const float a_coefficients[3] = {
     1,
     -2 + Nc * Ts,
@@ -49,14 +47,15 @@ const float b_coefficients[3] = {
 float input_array[3] = {0, 0, 0};
 float output_array[3] = {0, 0, 0}; 
 int pwm_output_bits = 0;
+float setpoint_v = 0.0;
 //
 
 // Feedback correction coefficients
-//const float fb_curve_coefficients[4] = {-0.1436, 4.2716, -0.6413, 0.1787};
-const float fb_curve_coefficients[4] = {-0.0358, 4.0233, -0.487, 0.1506};
+const float fb_curve_coefficients[4] = {-0.1436, 4.2716, -0.6413, 0.1787};
 //
 
 void timer_callback(void* arg);
+void print_output_values();
 
 void app_main(void){
 
@@ -93,7 +92,6 @@ void app_main(void){
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_4, &adc1_chan_cfg);
     adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_5, &adc1_chan_cfg);
     //
 
@@ -107,7 +105,6 @@ void app_main(void){
     //
 
     // Configure timer
-    esp_timer_handle_t timer_handle;
     esp_timer_create_args_t timer_args = {
         .callback = &timer_callback,
         .arg = NULL,
@@ -115,33 +112,34 @@ void app_main(void){
         .name = "PID Timer"
     };
     esp_timer_create(&timer_args, &timer_handle);
-    esp_timer_start_periodic(timer_handle, TIMER_PERIOD_US);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    printf("Starting identification sequence...\n");
+    esp_timer_start_periodic(timer_handle, SAMPLE_TIME_US);
 
-    //
-    //while(true){
-        //TickType_t xLastWakeTime = xTaskGetTickCount();
-
-        
-
-        //vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(Ts_ms));
-    //}
+    while(true){
+        if(!esp_timer_is_active(timer_handle)){
+            printf("Setpoint sequence completed, printing output values:\n");
+            print_output_values();
+            break;
+        }
+    }
 }
 
 void timer_callback(void* arg){
-    adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, POT_CHANNEL, &setpoint_mv);
-    setpoint_v = setpoint_mv * (12.0 / 3300.0);
+    if(value_index == SAMPLE_SIZE){
+        ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0, 0);
+        esp_timer_stop(timer_handle);
+        return;
+    }
+
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
     fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
-    if(fb_value_v < 0.0){
-        fb_value_v = 0.0;
-    } else if(fb_value_v > 12.0){
-        fb_value_v = 12.0;
-    }
 
-    //printf("Setpoint: %.2f V \n", setpoint_v);
-    //printf("Feedback: %.2f V \n", fb_value_v);
-    setpoint_v = 6.2;
+    output[value_index] = fb_value_v;
+
+    setpoint_v = SETPOINT_V;
+
     input_array[0] = setpoint_v - fb_value_v;
     output_array[0] = b_coefficients[0] * input_array[0] + b_coefficients[1] * input_array[1] + b_coefficients[2] * input_array[2] - a_coefficients[1] * output_array[1] - a_coefficients[2] * output_array[2];
 
@@ -152,10 +150,34 @@ void timer_callback(void* arg){
     } else if(pwm_output_bits < 0) {
         pwm_output_bits = 0;
     }
+    pwm[value_index] = pwm_output_bits;
     
     ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
     input_array[2] = input_array[1];
     input_array[1] = input_array[0];
     output_array[2] = output_array[1];
     output_array[1] = output_array[0];
+
+    value_index++;
+}
+
+void print_output_values(){
+    printf("START\n");
+    for(int i = 0; i < SAMPLE_SIZE; i++){
+        if(output[i] < 0){
+            output[i] = 0;
+        }
+        printf("%.2f\n", output[i]);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    printf("END\n");
+
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+    printf("START\n");
+    for(int i = 0; i < SAMPLE_SIZE; i++){
+        printf("%.2f\n", pwm[i]);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    printf("END\n");
 }
