@@ -689,7 +689,7 @@ de una respuesta lenta y robusta:
     \end{subfigure}
 
     \vspace{-0.25cm}
-    \caption{Sintonización con Kp=0,06; Ki=3.47; Kd=-0.0002; N=0,02.}
+    \caption{Sintonización con Kp=0,06; Ki=3.47; Kd=-0.0002; N=59,7.}
     \label{fig:sintonizacion}
 \end{figure}
 \vspace{-0.5cm}
@@ -697,7 +697,8 @@ de una respuesta lenta y robusta:
 \subsubsection*{\it{Resultados}}
 \vspace{-0.25cm}
 
-A continuación se presentan distintas figuras con diferentes valores de constantes Kp, Ki, Kd y N:
+A continuación se presentan distintas figuras con diferentes valores de constantes Kp, Ki, Kd y N. Se configura
+un setpoint fijo de 6,00 V, a excepción de la figura \ref{fig:pid1}, que se configura un setpoint de 5,50 V.
 
 \begin{figure}[H]
     \centering
@@ -714,12 +715,12 @@ A continuación se presentan distintas figuras con diferentes valores de constan
         \includegraphics[width=\textwidth]{pid_1_osc.png}
         %\vspace{-0.25cm}
         \caption{Retroalimentación (V) según osciloscopio.}
-        \label{fig:pid_1_osciloscopio}
+        \label{fig:pid1_osciloscopio}
     \end{subfigure}
 
     \vspace{-0.25cm}
     \caption{Respuesta temporal con Kp=0,02; Ki=9.78; Kd=0; N=92,75.}
-    \label{fig:pid1_osciloscopio}
+    \label{fig:pid1}
 \end{figure}
 \vspace{-0.5cm}
 
@@ -728,22 +729,49 @@ A continuación se presentan distintas figuras con diferentes valores de constan
 
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{pid_15_output.eps}
+        \includegraphics[width=\textwidth]{Kp0,5.png}
         %\vspace{-0.25cm}
         \caption{Señal de salida (Volts).}
-        \label{fig:pid_15_output}
+        \label{fig:pid_solokp_salida}
     \end{subfigure}
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{pid_15_pwmbits.eps}
+        \includegraphics[width=\textwidth]{Kp0,5_c.png}
         %\vspace{-0.25cm}
         \caption{Señal de control (duty cycle en bits).}
-        \label{fig:pid_15_pwm}
+        \label{fig:pid_solokp_control}
     \end{subfigure}
 
     \vspace{-0.25cm}
-    \caption{Respuesta temporal con Kp=1; Ki=5; Kd=0; N=0.}
-    \label{fig:pid15_osciloscopio}
+    \caption{Respuesta temporal con Kp=0,5; Ki=0; Kd=0; N=0.}
+    \label{fig:pid_solokp}
+\end{figure}
+\vspace{-0.5cm}
+
+Como se aprecia en la figura \ref{fig:pid_solokp} observa un error de estado estacionario debido a que se configura un control
+solamente proporcional.
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Kp1Ki500Kd0N0.png}
+        %\vspace{-0.25cm}
+        \caption{Señal de salida (Volts).}
+        \label{fig:pid_kialto_salida}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Kp1Ki500Kd0N0_c.png}
+        %\vspace{-0.25cm}
+        \caption{Señal de control (duty cycle en bits).}
+        \label{fig:pid_kialto_control}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta temporal con Kp=1; Ki=500; Kd=0; N=0.}
+    \label{fig:pid_kialto}
 \end{figure}
 \vspace{-0.5cm}
 
@@ -752,24 +780,49 @@ A continuación se presentan distintas figuras con diferentes valores de constan
 
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{pid_3_output.eps}
+        \includegraphics[width=\textwidth]{Kp1Ki0Kd5N500.png}
         %\vspace{-0.25cm}
         \caption{Señal de salida (Volts).}
-        \label{fig:pid3_micro}
+        \label{fig:pid_kdalto_salida}
     \end{subfigure}
     \begin{subfigure}[b]{0.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{pid_3_pwm.eps}
+        \includegraphics[width=\textwidth]{Kp1Ki0Kd5N500_c.png}
         %\vspace{-0.25cm}
         \caption{Señal de control (duty cycle en bits).}
-        \label{fig:pid_3_pwm}
+        \label{fig:pid_kdalto_control}
     \end{subfigure}
 
     \vspace{-0.25cm}
-    \caption{Respuesta temporal con Kp=0,42; Ki=33.16; Kd=8,3$\times 10^{-6}$; N=0,00012}
-    \label{fig:pid3}
+    \caption{Respuesta temporal con Kp=1; Ki=0; Kd=5; N=500.\protect \footnotemark}
+    \label{fig:pid_kdalto}
 \end{figure}
 \vspace{-0.5cm}
 
-Estas últimas gráficas poseen un ruido excepcional debido a la mala calidad de la fuente de alimentación
-de entrada disponible en el hogar, a comparación de la fuente de laboratorio utilizada en las mediciones anteriores.
+\footnotetext{Una constante derivativa alta inestabiliza el sistema.}
+
+Finalmente se decide utilizar la siguiente configuración de control PID:
+
+\begin{figure}[H]
+    \centering
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Kp0,5381Ki52,39Kd0,0002741N543,18.png}
+        %\vspace{-0.25cm}
+        \caption{Señal de salida (Volts).}
+        \label{fig:pid_final_salida}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Kp0,5381Ki52,39Kd0,0002741N543,18_c.png}
+        %\vspace{-0.25cm}
+        \caption{Señal de control (duty cycle en bits).}
+        \label{fig:pid_final_control}
+    \end{subfigure}
+
+    \vspace{-0.25cm}
+    \caption{Respuesta temporal con Kp=0,54; Ki=52,39; Kd=2,74 $\times 10^{-4}$; N=543.}
+    \label{fig:pid_final}
+\end{figure}
+\vspace{-0.5cm}
