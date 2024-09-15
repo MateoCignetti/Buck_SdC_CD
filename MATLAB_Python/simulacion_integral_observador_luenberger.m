@@ -1,4 +1,5 @@
 clear all;
+close all;
 
 %% Parámetros de Simulación
 Ts = 200e-6;
@@ -52,7 +53,12 @@ x = ones(nx, Nsim + 1) .* x0;
 
 % Observador
 x_hat = ones(nx, Nsim + 1) .* x0;
-L = [0.5; 0.5]; % Ganancia del observador
+pole1_obs = 0.1;
+pole2_obs = -0.1;
+p_obs = [pole1_obs pole2_obs];
+L = place(A', C', p_obs); % Ganancia del observador
+L = L';
+
 
 % Salidas del simulador
 yOut  = SS_disc.C*x0; 
