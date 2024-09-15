@@ -1,5 +1,3 @@
-//#include "freertos/FreeRTOS.h"
-//#include "freertos/task.h"
 #include "driver/ledc.h"
 #include "driver/gpio.h"
 #include "esp_adc/adc_oneshot.h"
@@ -7,9 +5,14 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "math.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
-#define ABRITRARY_SETPOINT 1
-#define SETPOINT_ARBITRARY_V 5.55
+#define ABRITRARY_SETPOINT 0
+#define SETPOINT_ARBITRARY_V 6.25
+
+#define PRINT_TASK_PERIOD_MS 50
 
 #define PWM_FREQUENCY 19000
 #define TIMER_PERIOD_US 200
@@ -19,6 +22,9 @@
 
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_handle;
+TaskHandle_t xTaskPrint_handle = NULL;
+
+portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 int fb_value_mv = 0;
 float fb_value_v = 0.0;
@@ -29,7 +35,7 @@ float accumulated_error = 0.0;
 const float Ts = TIMER_PERIOD_US / 1000000.0;
 
 float error = 0.0;
-float u_signal = 0;
+float u_signal = 0.0;
 
 const float K_new[2] = {48.1955, -27.9267};
 const float ki = -1.9110;
@@ -45,8 +51,9 @@ float b21 = 0.1336;
 float c11 = 1.0;
 float c12 = 0.0;
 
-float l11 = 0.5;
-float l21 = 0.5;
+float l11 = 1.8440;
+float l21 = 2.5443;
+
 
 float x1_hat[2] = {0.0, 0.0};
 float x2_hat[2] = {0.0, 0.0};
@@ -59,6 +66,7 @@ const float fb_curve_coefficients[4] = {-0.0358, 4.0233, -0.487, 0.1506};
 //
 
 void timer_callback(void* arg);
+void vTaskPrint();
 
 void app_main(void){
 
@@ -118,11 +126,21 @@ void app_main(void){
     };
     esp_timer_create(&timer_args, &timer_handle);
     esp_timer_start_periodic(timer_handle, TIMER_PERIOD_US);
+    
+    xTaskCreate(&vTaskPrint,
+                "vTaskPrint",
+                configMINIMAL_STACK_SIZE * 5,
+                NULL,
+                1,
+                &xTaskPrint_handle);
 }
 
 void timer_callback(void* arg){
-    //adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, POT_CHANNEL, &setpoint_mv);
-    //setpoint_v = setpoint_mv * (12.0 / 3300.0);
+    #if !ARBITRARY_SETPOINT
+        adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, POT_CHANNEL, &setpoint_mv);
+        setpoint_v = setpoint_mv * (12.0 / 3300.0);
+    #endif
+
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
     fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
@@ -141,21 +159,19 @@ void timer_callback(void* arg){
 
     error = setpoint_v - fb_value_v;
 
-    //printf("Error: %.2f V \n", error);
-
     x1_hat[0] = x1_hat[1];
     x2_hat[0] = x2_hat[1];
 
+    x1_hat[1] = (a11 - l11 * c11) * x1_hat[0] + (a12 - l11 * c12) * x2_hat[0] + b11 * u_signal + l11 * fb_value_v;
+    x2_hat[1] = (a21 - l21 * c11) * x1_hat[0] + (a22 - l21 * c12) * x2_hat[0] + b21 * u_signal + l21 * fb_value_v;
+
     u_signal = -ki * accumulated_error - (K_new[0] * x1_hat[0] + K_new[1] * x2_hat[0]);
-    //printf("u: %.2f \n", u_signal);
-
-
-    x1_hat[1] = (a11 - l11 * c11) * x1_hat[0] + (a12 - l11 * c12) * x2_hat[0] + b11 * pwm_output_bits + l11 * fb_value_v;
-    x2_hat[1] = (a21 - l21 * c11) * x1_hat[0] + (a22 - l21 * c12) * x2_hat[0] + b21 * pwm_output_bits + l21 * fb_value_v;
-
-    printf("x1: %.2f \n",x1_hat[1]);
-
-    //printf("Feedback: %.2f V \n", x1_hat[0]);
+    
+    if(u_signal > 12.0){
+        u_signal = 12.0;
+    } else if(u_signal < 0) {
+        u_signal = 0;
+    }
 
     pwm_output_bits = (int) (u_signal * 4095.0 / 12.0);
 
@@ -167,4 +183,36 @@ void timer_callback(void* arg){
     
     ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
     accumulated_error += error;
+}
+
+void vTaskPrint(void *pvParameters){
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    float setpoint_v_l = 0.0;
+    float fb_value_v_l = 0.0;
+    float error_l = 0.0;
+    float u_signal_l = 0.0;
+    float x1_hat_l = 0.0;
+    float x2_hat_l = 0.0;
+    int pwm_output_bits_l = 0;
+
+    while(true){
+        taskENTER_CRITICAL(&_spinlock);
+        setpoint_v_l = setpoint_v;
+        fb_value_v_l = fb_value_v;
+        error_l = error;
+        u_signal_l = u_signal;
+        x1_hat_l = x1_hat[0];
+        x2_hat_l = x2_hat[0];
+        pwm_output_bits_l = pwm_output_bits;
+        taskEXIT_CRITICAL(&_spinlock);
+
+        printf("Setpoint: %.2f V \n", setpoint_v_l);
+        printf("Feedback: %.2f V \n", fb_value_v_l);
+        printf("Error: %.2f V \n", error_l);
+        printf("u: %.2f \n", u_signal_l);
+        printf("x1: %.2f \n",x1_hat_l);
+        printf("x2: %.2f \n",x2_hat_l);
+        printf("PWM: %d \n", pwm_output_bits_l);
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(PRINT_TASK_PERIOD_MS));
+    }
 }
