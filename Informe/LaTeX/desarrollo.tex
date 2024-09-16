@@ -826,3 +826,155 @@ Finalmente se decide utilizar la siguiente configuración de control PID:
     \label{fig:pid_final}
 \end{figure}
 \vspace{-0.5cm}
+
+\vspace{-0.5cm}
+\begin{equation}
+    \hat{x}(k+1) = A_d \hat{x}(k) + B_d u(k) + L_d (y(k) - \hat{y}(k)) \\        
+\end{equation}
+\vspace{-0.5cm}
+\begin{equation}
+    \hat{y}(k) = C_d \hat{x}(k) \\
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    \hat{x}(k+1) = (A_d - L_d C_d) \hat{x}(k) + B_d u(k) + L_d y(k)
+\end{equation}
+
+\vspace{-0.5cm}
+\begin{equation}
+    \begin{bmatrix}
+        \hat{x}_1(k+1) \\
+        \hat{x}_2(k+1)
+    \end{bmatrix}
+    =
+    \left(
+        \begin{bmatrix}
+            A_{11} & A_{12} \\
+            A_{21} & A_{22}
+        \end{bmatrix}
+        -
+        \begin{bmatrix}
+            L_{11} \\
+            L_{21}
+        \end{bmatrix}
+        \begin{bmatrix}
+            C_{11} & C_{12}
+        \end{bmatrix}    
+    \right)
+    \cdot
+    \begin{bmatrix}
+        \hat{x}_1(k) \\
+        \hat{x}_2(k)
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        B_{11} \\
+        B_{21}
+    \end{bmatrix}
+    u
+    +
+    \begin{bmatrix}
+        L_{11} \\
+        L_{21}
+    \end{bmatrix}
+    y
+\end{equation}
+
+\begin{equation}
+    \begin{bmatrix}
+        \hat{x}_1(k+1) \\
+        \hat{x}_2(k+1)
+    \end{bmatrix}
+    =
+    \left(
+        \begin{bmatrix}
+            A_{11} & A_{12} \\
+            A_{21} & A_{22}
+        \end{bmatrix}
+        -
+        \begin{bmatrix}
+            L_{11} C_{11} & L_{11} C_{12}\\
+            L_{21} C_{11} & L_{21} C_{12}
+        \end{bmatrix}    
+    \right)
+    \cdot
+    \begin{bmatrix}
+        \hat{x}_1(k) \\
+        \hat{x}_2(k)
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        B_{11} u \\
+        B_{21} u
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        L_{11} y\\
+        L_{21} y
+    \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+    \begin{bmatrix}
+        \hat{x}_1(k+1) \\
+        \hat{x}_2(k+1)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        A_{11} - L_{11} C_{11} & A_{12} - L_{11} C_{12} \\
+        A_{21} - L_{21} C_{11} & A_{22} - L_{21} C_{12}
+    \end{bmatrix}
+    \cdot
+    \begin{bmatrix}
+        \hat{x}_1(k) \\
+        \hat{x}_2(k)
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        B_{11} u \\
+        B_{21} u
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        L_{11} y\\
+        L_{21} y
+    \end{bmatrix}
+\end{equation}
+\vspace{-0.5cm}
+
+\begin{equation}
+    \begin{bmatrix}
+        \hat{x}_1(k+1) \\
+        \hat{x}_2(k+1)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        (A_{11} - L_{11} C_{11}) \hat{x}_1(k) + (A_{12} - L_{11} C_{12}) \\
+        (A_{21} - L_{21} C_{11}) \hat{x}_1(k) + (A_{22} - L_{21} C_{12})
+    \end{bmatrix}
+    \begin{bmatrix}
+        \hat{x}_1(k) \\
+        \hat{x}_2(k)
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        B_{11} \\
+        B_{21}
+    \end{bmatrix} u
+    +
+    \begin{bmatrix}
+        L_{11} \\
+        L_{21}
+    \end{bmatrix} y
+\end{equation}
+    
+\begin{equation}
+    \hat{x}_1(k+1) = (A_{11} - L_{11} C_{11}) \hat{x}_1(k) + (A_{12} - L_{11} C_{12}) \hat{x}_2(k) + B_{11} u + L_{11} y
+\end{equation}
+ 
+\vspace{-0.5cm}
+\begin{equation}
+    \hat{x}_2(k+1) = (A_{21} - L_{21} C_{11}) \hat{x}_1(k) + (A_{22} - L_{21} C_{12}) \hat{x}_2(k) + B_{21} u + L_{21} y
+\end{equation}
+    
