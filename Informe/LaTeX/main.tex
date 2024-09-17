@@ -1,59 +1,55 @@
-\documentclass[12pt, a4paper, fleqn]{article}
+\documentclass[10pt, a4paper, fleqn]{article}
 
 % Símbolos y lenguaje español %
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
 
 % Márgenes %
-\usepackage[left=2.54cm, right=2.54cm, top=2.54cm, bottom=2.54cm]{geometry}
+\usepackage[left=2cm, right=2cm, top=2.91cm, bottom=2cm]{geometry}
+\usepackage{setspace}
+\usepackage{titlesec}    % Para configurar los títulos y subtítulos
+\usepackage{times}       % Para usar Times New Roman
+
+% Interlineado de 1.15 para el cuerpo de texto
+\setstretch{1.15}
+
+% Interlineado de 1.5 para los títulos y subtítulos
+\titlespacing*{\section}{0pt}{\baselineskip}{\baselineskip}
+\titlespacing*{\subsection}{0pt}{\baselineskip}{\baselineskip}
+
+\titleformat{\section}{\large\bfseries\setstretch{1.5}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries\setstretch{1.5}}{\thesubsection}{1em}{}
 
 % Paquetes de matemática, símbolos y gráficos %
-\usepackage{amsmath}
-\usepackage{amssymb}
 \usepackage{float}
-\usepackage{mathtools} % Para splitfrac
-%\usepackage{textcomp}
-%\usepackage{gensymb}
-%\usepackage{xfrac}
-%\usepackage{amsfonts}
-%\usepackage{siunitx}
-
-% Tablas %
-\usepackage{longtable}
-\usepackage{tabularx}
-\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+\usepackage{mathtools}
 
 % Figuras %
 \usepackage{graphicx}
 \usepackage{subcaption}
-%\usepackage{caption}
 \graphicspath{{./figures/}}
+
+% Paquete de tablas y configuraciones
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
 
 % Interlineado y sangría %
 \usepackage[indent=0.5cm]{parskip}
 \setlength{\mathindent}{0cm}
-\usepackage{setspace}
-\usepackage{indentfirst}
 \singlespacing
-\setlength{\parskip}{0.1cm}
+%\setlength{\parskip}{0cm}
 
 % Encabezado y pie de página %
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\setlength{\headheight}{48pt}
-\addtolength{\topmargin}{-10pt}
-\setlength{\headsep}{0.5cm}
-\usepackage{wrapfig}
-\usepackage[bottom]{footmisc}
 %\renewcommand{\headrulewidth}{0cm} % Para borrar la línea del encabezado
 
 % Paquetes para enumerar items %
 \usepackage{enumitem}
 
 %---------- Paquetes de Bibliografía ----------%
-\usepackage[sorting=none,backend=biber,style=numeric,citestyle=authoryear]{biblatex}
+\usepackage[sorting=none,backend=biber,style=ieee,citestyle=numeric-comp]{biblatex}
+%\nocite{*} % esto es para que aparezcan las referencias no citadas, DESPUES BORRAR
 \usepackage{csquotes}
-
 \bibliography{referencias}
 
 % Hipervínculos %
@@ -66,23 +62,26 @@
 % Justificado %
 \usepackage[]{ragged2e}
 
-\pretitle{\begin{justify}\LARGE\bfseries}
-\posttitle{\end{justify}\vspace{1cm}}
+\pretitle{\justify\LARGE\bfseries}
+\posttitle{\justify\vspace{1cm}}
 
-
-\preauthor{\begin{flushleft}}
-\postauthor{\end{flushleft}}
+\preauthor{\flushleft}
+\postauthor{\flushleft}
 
 \predate{}
 \postdate{}
 
-\title{Trabajo Práctico Final: Controlador Digital de un convertidor Buck CC-CC}
-\author{\textbf{Cignetti, Mateo Antonio (Autor)} \\ Departamento de Ingeniería Electrónica, UTN Facultad Regional San Francisco \\
-        Av. de la Universidad 501, San Francisco, Córdoba - Argentina \\ mateo@cignetti.ar \\ \vspace{0.5cm}
-        \textbf{Galliano, Ignacio (Autor)} \\ Departamento de Ingeniería Electrónica, UTN Facultad Regional San Francisco \\
-        Av. de la Universidad 501, San Francisco, Córdoba - Argentina \\ igalliano@facultad.sanfrancisco.utn.edu.ar \\ \vspace{0.5cm}}
-\date{}
 
+\title{
+    \centering \fontsize{24pt}{14pt}\selectfont \textbf{Trabajo Final: Control Digital de un convertidor Buck}
+}
+\author{
+    \centering \fontsize{12pt}{14pt}\selectfont Cignetti, Mateo Antonio (Autor)\\
+    \normalsize Departamento de Ingeniería Electrónica, UTN Facultad Regional San Francisco, Córdoba, Argentina \\
+    mateo@cignetti.ar
+    \vspace{0.5cm} % Espacio después de los autores
+}
+\date{}
 
 \begin{document}
 
@@ -94,14 +93,12 @@
 
     \input{resumen}
     \input{introduccion}
-    %\vspace{-0.4cm}
     \input{desarrollo}
-    \newpage
     \input{conclusion}
 
     \newpage
     \renewcommand{\refname}{\large REFERENCIAS}
-    \begin{minipage}{0.9\textwidth}
+    \begin{minipage}{0.96\textwidth}
     \printbibliography
     \end{minipage}
 
