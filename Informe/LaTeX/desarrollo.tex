@@ -404,45 +404,45 @@ Si bien el modelo del sistema se puede obtener a partir de las ecuaciones de Kir
 a obtener un modelo empírico. Para ello, se aplica una señal de entrada al sistema físico y se
 mide la respuesta del mismo.
 
+A fin de diseñar un modelo que sea efectivo en situaciones prácticas, primero se analiza la respuesta
+del sistema, con distintos valores de ciclo de trabajo (duty):
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=6cm]{lineal.png}
+    \vspace{-0.25cm}
+    \caption{Respuesta del sistema ante distintos valores de duty.}
+    \label{fig:lineal}
+\end{figure}
+
 En esta ocasión, se optó por utilizar una señal de entrada PRBS
 (Pseudo Random Binary Sequence, en español Secuencia Binaria Pseudo Aleatoria). La misma intenta
 cubrir todo el rango de frecuencias posibles, y es útil para identificar sistemas lineales y no lineales.
 Utilizando MATLAB, se genera una señal PRBS con un tiempo de muestreo de 200 microsegundos, frecuencia máxima
-800 Hz, y una duración de 10 períodos. Esta señal es una secuencia de 186 valores en 0,0372 segundos repetida diez veces.
-Es decir, 1860 valores en un rango de 0 a 0,372 segundos.
+100 Hz, y una duración de 10 períodos. Esta señal es una secuencia de 750 valores en 0,15 segundos, repetida diez veces.
+Es decir, 7500 valores en un rango de 0 a 1,5 segundos.
 
 Se programa el microcontrolador para reproducir la señal PRBS en el convertidor Buck, medir la salida
-del sistema y luego enviar los datos mediante comunicación serial. A través de un programa en Python, se guardan
-los valores en un archivo csv para luego introducir en el System Identification Toolbox de MATLAB:
+del sistema y luego enviar los datos mediante comunicación serial. La identificación se realizó de tal manera 
+que los valores de 0 en la señal PRBS signifiquen ciclo de trabajo 0, mientras que los valores de 1 sean ciclo
+de trabajo 1000. A través de un programa en Python, se guardan los valores en un archivo csv para luego introducir en el
+System Identification Toolbox de MATLAB:
 
 
 \begin{figure}[H]
     \centering
-
-    \begin{subfigure}[b]{\textwidth}
-        \centering
-        \includegraphics[height=8cm]{identificacion_io.eps}
-        %\vspace{-0.25cm}
-        \caption{Vista completa de la señal de evaluación y validación.}
-        \label{fig:identificacion_io_gral}
-    \end{subfigure}
-    \begin{subfigure}[b]{\textwidth}
-        \centering
-        \includegraphics[height=8cm]{identificacion_zoom.eps}
-        %\vspace{-0.25cm}
-        \caption{Vista acercada de la señal de evaluación.}
-        \label{fig:identificacion_io_zoom}
-    \end{subfigure}
-
+    \includegraphics[height=8cm]{identificacion_io.eps}
     \vspace{-0.25cm}
     \caption{Salida (arriba) y entrada (abajo) del sistema con la señal de identificación.}
     \label{fig:identificacion_io}
 \end{figure}
-\vspace{-0.5cm}
 
-Se seleccionan los primeros 1488 valores (80\% de los valores totales) como la señal de evaluación
-y los restantes 372 valores (20\% de los valores totales) como la señal de validación. Finalmente,
-se estima un modelo en espacios de estado de orden 3 utilizando la función \textit{N4SID} del System Identification Toolbox:
+
+Se seleccionan los primeros 6500 valores (80\% de los valores totales) como la señal de evaluación
+(graficada en color celeste en la figura \ref{fig:identificacion_io}), y los restantes 1000 valores
+(20\% de los valores totales) como la señal de validación (graficada en color naranja en la figura \ref{fig:identificacion_io}). Finalmente,
+se estima un modelo en espacios de estado continuo de orden 2 utilizando la función \textit{N4SID} del System Identification Toolbox, sin
+factor de perturbación:
 
 \begin{figure}[H]
     \centering
@@ -453,7 +453,7 @@ se estima un modelo en espacios de estado de orden 3 utilizando la función \tex
         %\vspace{-0.25cm}
         \caption{Comparación del modelo estimado con la respuesta medida.}
         \vspace{0.25cm}
-        \label{fig:identificacion_comparacio n}
+        \label{fig:identificacion_comparacion}
     \end{subfigure}
     \begin{subfigure}[b]{\textwidth}
         \centering
@@ -469,94 +469,108 @@ se estima un modelo en espacios de estado de orden 3 utilizando la función \tex
 \end{figure}
 \vspace{-0.5cm}
 
-Como se puede observar en la Figura \ref{fig:identificacion_resultados}, el modelo estimado coincide
-con la respuesta medida del sistema (señal de validación) en un 64,89\%. Respecto a la señal de 
-evaluación, coincide en un 92,61\%. Además, el análisis residual del modelo estimado
-demuestra un buen resultado en la autocorrelación de residuales para la salida y para la correlación
-cruzada de residuales entre la entrada y la salida.
+Como se puede observar en la Figura \ref{fig:identificacion_comparacion}, el modelo estimado coincide
+con la respuesta medida del sistema (señal de validación) en un 61.06\%. El análisis residual del modelo estimado
+no demuestra un buen resultado en la autocorrelación de residuales para la salida, pero sí demuestra un buen resultado 
+para la correlación cruzada de residuales entre la entrada y la salida. Si bien se puede obtener un modelo
+con mayor correlación con la salida medida y con un mejor resultado de análisis residual agregando un factor
+de perturbación $K$, este modelo presenta mejores resultados en la práctica.
 
-El modelo estimado en espacios de estado discreto es el siguiente:
+El modelo continuo estimado en espacios de estado es el siguiente:
 
 \vspace{-0.5cm}
 \begin{equation}
     \begin{cases}
         \begin{bmatrix}
             \dot{x_1}   \\
-            \dot{x_2}   \\
-            \dot{x_3}
+            \dot{x_2}   
         \end{bmatrix}
         =
-        A
+
+        \begin{bmatrix}
+            0   &   1 \\
+            -1.914 \times 10^5   &  -3744           
+        \end{bmatrix}
+
         \cdot
         \begin{bmatrix}
             x_1 \\
-            x_2 \\
-            x_3
+            x_2 
         \end{bmatrix}
         +
-        B
+        \begin{bmatrix}
+            2.214 \\
+            -7000           
+        \end{bmatrix}
         \cdot
         u 
-        +
-        K
-        \cdot
-        e
+        \\
         \\
         y =
-        C
+        \begin{bmatrix}
+            1 & 0
+        \end{bmatrix}
         \cdot
         \begin{bmatrix}
             x_1 \\
-            x_2 \\
-            x_3
+            x_2
         \end{bmatrix}
-        +
-        e
 
     \end{cases}
+    \label{eq:modelo_continuo}
 \end{equation}
+\vspace{-0.5cm}
 
-Donde:
+Discretizando utilizando retención de orden cero (zoh), con un tiempo de muestreo de $0.001\ s$, se obtiene:
 
 \vspace{-0.5cm}
 \begin{equation}
-    A = \begin{bmatrix}
-        0.9933   &   -0.01093    &   -0.0006102\\
-        0.1064   &   0.8617      &   -0.2955   \\
-        0.005556 &   -0.02709    &   -0.6608            
-    \end{bmatrix}
+    \begin{cases}
+        \begin{bmatrix}
+            \dot{x_1}   \\
+            \dot{x_2}   
+        \end{bmatrix}
+        =
+
+        \begin{bmatrix}
+            0.9626   &   0.000254 \\
+            -48.61   &  0.01175           
+        \end{bmatrix}
+
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2 
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            0.0008139 \\
+            -1.861           
+        \end{bmatrix}
+        \cdot
+        u 
+        \\
+        \\
+        y =
+        \begin{bmatrix}
+            1 & 0
+        \end{bmatrix}
+        \cdot
+        \begin{bmatrix}
+            x_1 \\
+            x_2
+        \end{bmatrix}
+
+    \end{cases}
+    \label{eq:modelo_discreto}
 \end{equation}
+\vspace{-0.5cm}
+
+El mismo se puede representar en función de transferencia luego de transformarlo mediante MATLAB:   
 
 \vspace{-0.5cm}
 \begin{equation}
-    B = \begin{bmatrix}
-        0.000438   \\
-        -0.005044  \\
-        0.02667
-    \end{bmatrix}
-\end{equation}\
-
-\vspace{-0.5cm}
-\begin{equation}
-    C = \begin{bmatrix}
-        188.4 & 2.647 & 0.7808
-    \end{bmatrix}
-\end{equation}
-
-\vspace{-0.75cm}
-\begin{equation}
-    K = \begin{bmatrix}
-        0.002016 \\
-        -0.0145   \\
-        -0.008185
-    \end{bmatrix}
-\end{equation}
-
-El mismo se puede representar en función de transferencia luego de transformarlo mediante MATLAB:
-
-\vspace{-0.5cm}
-\begin{equation}
-    H(z) = \dfrac{0.09\ z^{-1} - 0.06406\ z^{-2} + 0.02537\ z^{-3}}{1 - 1.194\ z^{-1} - 0.3768\ z^{-2} + 0.5743\ z^{-3}}
+    H(z) = \dfrac{0.0008138\ z^{-1} - 0.0004821\ z^{-2}}{1 - 0.9744\ z^{-1} + 0.02366\ z^{-2}}
 \end{equation}
 \vspace{-0.5cm}
 
@@ -610,6 +624,10 @@ A continuación se grafican las respuestas temporal y en frecuencia del sistema 
 \end{figure}
 \vspace{-0.5cm}
 
+Como se puede observar en la figura \ref{fig:estimado_bode}, el sistema tiene una frecuencia de corte 
+de $52.3\ rad/s$ (ya que la banda de paso es de $43.4\ dB$). Por lo tanto, el ancho de banda del sistema
+identificado es de $8.32\ Hz$
+
 \subsubsection*{\it{Análisis de estabilidad}}
 \vspace{-0.5cm}
 
@@ -646,16 +664,16 @@ el punto crítico (-1, 0). Debido a estas características se determina que el s
 En la figura \ref{fig:estimado_rlocus}, se observa que para ciertos parámetros del sistema, un polo puede
 ubicarse por fuera del círculo unitario en el plano z, resultando en un sistema inestable.
 
-\subsubsection*{\it{Implementación en microcontrolador}}
+\subsubsection*{\it{Implementación en microcontrolador - PID}}
 \vspace{-0.25cm}
 
-Para implementar el sistema de control en el microcontrolador, se implementó un timer de 200 microsegundos,
+Para implementar el sistema de control PID en el microcontrolador, se implementó un timer de 200 microsegundos,
 que llama a una función de control cada vez que termina. Este temporizador corre periódicamente durante el funcionamiento
 del programa. Se configura también un canal de PWM para controlar el MOSFET del convertidor buck, con frecuencia de 19 kHz
 y ciclo de trabajo variable.
 
 En la función de control, se mide el valor del ADC (convertidor analógico a digital) para obtener el
-valor de setpoint, que varía de 0 V a 10 V. Luego, se mide por el ADC el valor de la retroalimentación, que, aplicada
+valor de setpoint, que varía de 0 V a 12 V. Luego, se mide por el ADC el valor de la retroalimentación, que, aplicada
 a una curva de calibración, se obtiene el valor de tensión de salida. El setpoint restado a este valor resulta en
 el error que, ingresado en la fórmula de ecuación en diferencias del controlador PID con filtro derivativo, se obtiene
 la señal de control. Esta señal se aplica al PWM (modulación por ancho de pulso) del pin de salida que controla
@@ -663,38 +681,7 @@ el MOSFET del convertidor buck.
 
 La programación se realizó mediante esp-idf, utilizando la referencia de API oficial de Espressif para el ESP32-S3. \parencite{ESPIDF}
 
-\subsubsection*{\it{Sintonización del controlador PID}}
-\vspace{-0.25cm}
-
-Para la sintonización del controlador PID, se utilizó la herramienta de MATLAB PID Tuner. A partir de valores obtenidos,
-se modifican levemente para obtener una respuesta deseada. En la figura siguiente, se observa como ejemplo la configuración
-de una respuesta lenta y robusta:
-
-\begin{figure}[H]
-    \centering
-
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pid_2_tuner.png}
-        %\vspace{-0.25cm}
-        \caption{PID Tuner}
-        \label{fig:pid2_tuner}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pid_2.eps}
-        %\vspace{-0.25cm}
-        \caption{Tensión de salida.}
-        \label{fig:pid2_micro}
-    \end{subfigure}
-
-    \vspace{-0.25cm}
-    \caption{Sintonización con Kp=0,06; Ki=3,47; Kd=-0,0002; N=59,7.}
-    \label{fig:sintonizacion}
-\end{figure}
-\vspace{-0.5cm}
-
-\subsubsection*{\it{Resultados}}
+\subsubsection*{\it{Resultados controlador PID}}
 \vspace{-0.25cm}
 
 A continuación se presentan distintas figuras con diferentes valores de constantes Kp, Ki, Kd y N. Se configura
@@ -826,6 +813,64 @@ Finalmente se decide utilizar la siguiente configuración de control PID:
     \label{fig:pid_final}
 \end{figure}
 \vspace{-0.5cm}
+
+\subsubsection*{\it{Control en espacio de estados}}
+
+Antes de comenzar el desarrollo de un sistema de control en espacio de estados, se debe analizar
+que el sistema cumpla con la condición para garantizar una controlabilidad completa. Para ello,
+se calcula la matriz de controlabilidad, la cual debe ser de rango 2 (para un sistema de segundo orden).
+
+\vspace{-0.5cm}
+\begin{equation}
+    Co
+    =
+    \begin{bmatrix}
+        \textbf{B} & \textbf{AB}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        0.0008  & 0.0003    \\
+        -1.8606 & -0.0614
+    \end{bmatrix}
+    \rightarrow
+    \
+    rank(Co) = 2\            
+    \
+    \therefore
+    \ Sistema\  controlable
+\end{equation}
+\vspace{-0.5cm}
+
+
+Observando la ecuación \ref{eq:modelo_continuo}, se tiene que la salida del sistema es igual
+al estado $x_1$. Debido a que el sistema fue obtenido mediante el System Identification Toolbox de MATLAB,
+el estado $x_2$ es desconocido, y para poder realizar un control es necesario obtener el valor del 
+estado en cada momento. Para ello, es necesario implementar algún tipo de observador.
+
+Primero, se analiza si el sistema cumple con la condición para ser completamente observable:
+
+\vspace{-0.5cm}
+\begin{equation}
+    Ob
+    =
+    \begin{bmatrix}
+        \textbf{C}  \\ \textbf{CA}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        1.0000  &    0      \\ 
+        0.9626  &    0.0003
+    \end{bmatrix}
+    \rightarrow
+    \
+    rank(Ob) = 2\            
+    \
+    \therefore
+    \ Sistema\  completamente \ observable
+\end{equation}
+\vspace{-0.5cm}         
+
+\parencite{OGATA}
 
 \vspace{-0.5cm}
 \begin{equation}
