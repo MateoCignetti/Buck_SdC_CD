@@ -7,7 +7,7 @@ Nsim = Tf/Ts;
 t = 0:Ts:Tf;
 
 %% Señal de Entrada - Set Point
-r_sp = 2.5*ones(size(t));
+r_sp = 4.5*ones(size(t));
 
 %% Espacio de estados identificado
 A = [0 1;-1.914e5 -3744];

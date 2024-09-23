@@ -10,54 +10,33 @@
 #include "freertos/semphr.h"
 
 #define ABRITRARY_SETPOINT 1
-#define SETPOINT_ARBITRARY_V 2.5
+#define SETPOINT_ARBITRARY_V 6.00
 
-#define PRINT_TASK_PERIOD_MS 10
+#define PRINT_TASK_PERIOD_MS 100
+#define READ_TASK_PERIOD_MS 10
 
 #define PWM_FREQUENCY 1000
-#define TIMER_PERIOD_US 1000
+#define TIMER_PERIOD_US 10000
 #define PWM_GPIO_NUM GPIO_NUM_4
-#define POT_CHANNEL ADC_CHANNEL_4
 #define FB_CHANNEL ADC_CHANNEL_5
 
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_handle;
 TaskHandle_t xTaskPrint_handle = NULL;
+TaskHandle_t xTaskRead_handle = NULL;
 
 portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 int fb_value_mv = 0;
 float fb_value_v = 0.0;
+float fb_value_calibrated = 0.0;
 int setpoint_mv = 0;
 float setpoint_v = 0.0;
 float accumulated_error = 0.0;
 
 const float Ts = TIMER_PERIOD_US / 1000000.0;
 
-double error = 0.0;
-double u_signal = 0.0;
-
-const float K_new[2] = {1178.7, 0.3};
-const float ki = -38.7326;
-
-const double a11 = 0.9626;
-const double a12 = 0.000254;
-const double a21 = -48.61;
-const double a22 = 0.01175;  
-
-const double b11 = 0.0008139;
-const double b21 = -1.861;
-
-const double c11 = 1;
-const double c12 = 0;
-
-const float l11 = 1.0744;
-const float l21 = -43.4405;
-
-float x1_hat[2] = {0.0, 0.0};
-float x2_hat[2] = {0.0, 0.0};
-
-int pwm_output_bits = 0;
+int pwm_output_bits = 100;
 //
 
 // Feedback correction coefficients
@@ -66,6 +45,7 @@ const float fb_curve_coefficients[4] = {-0.0358, 4.0233, -0.487, 0.1506};
 
 void timer_callback(void* arg);
 void vTaskPrint();
+void vTaskRead();
 
 void app_main(void){
 
@@ -102,7 +82,6 @@ void app_main(void){
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_4, &adc1_chan_cfg);
     adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_5, &adc1_chan_cfg);
     //
 
@@ -125,6 +104,12 @@ void app_main(void){
     };
     esp_timer_create(&timer_args, &timer_handle);
                             esp_timer_start_periodic(timer_handle, TIMER_PERIOD_US);
+    //
+
+    // Configure button
+    gpio_set_direction(GPIO_NUM_7, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(GPIO_NUM_7, GPIO_PULLUP_ONLY);
+    //
     
     xTaskCreate(&vTaskPrint,
                 "vTaskPrint",
@@ -132,117 +117,77 @@ void app_main(void){
                 NULL,
                 1,
                 &xTaskPrint_handle);
+
+    xTaskCreate(&vTaskRead,
+                "vTaskRead",
+                configMINIMAL_STACK_SIZE * 5,
+                NULL,
+                1,
+                &xTaskRead_handle);
 }
 
 void timer_callback(void* arg){
-    #if !ARBITRARY_SETPOINT
-        adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, POT_CHANNEL, &setpoint_mv);
-        setpoint_v = setpoint_mv * (12.0 / 3110.0);
-        //setpoint_v = setpoint_mv / 1000.0;
-    #endif
-
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
-    fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
+    //printf("Feedback: %.2f V \n", fb_value_v);
+    fb_value_calibrated = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
     if(fb_value_v < 0.0){
         fb_value_v = 0.0;
     } else if(fb_value_v > 12.0){
         fb_value_v = 12.0;
     }
-
-    //printf("Setpoint: %.2f V \n", setpoint_v);
-    //printf("Feedback: %.2f V \n", fb_value_v);
-
-    #if ABRITRARY_SETPOINT
-        setpoint_v = SETPOINT_ARBITRARY_V;
-    #endif
-
-    error = setpoint_v - fb_value_v;
-
-    if(x1_hat[1] > 12.0){
-        x1_hat[0] = 12.0;
-    } else if (x1_hat[1] < 0){
-        x1_hat[0] = 0;
-    } else{
-        x1_hat[0] = x1_hat[1];
-    }
-
-    if(x2_hat[1] > 9999.9){
-        x2_hat[0] = 9999.9;
-    } else if (x2_hat[1] < -9999.9){
-        x2_hat[0] = -9999.9;          
-    } else {
-        x2_hat[0] = x2_hat[1];
-    }
-    
-    u_signal = -ki * accumulated_error - (K_new[0] * x1_hat[0] + K_new[1] * x2_hat[0]);
-
-    //printf("u: %.2f \n", u_signal);
-
-    if(u_signal > 1000){
-        u_signal = 1000;
-    } else if(u_signal < 0) {
-        u_signal = 0;
-    }
-
-    x1_hat[1] = (a11 - l11 * c11) * x1_hat[0] + (a12 - l11 * c12) * x2_hat[0] + b11 * u_signal + l11 * fb_value_v;
-    x2_hat[1] = (a21 - l21 * c11) * x1_hat[0] + (a22 - l21 * c12) * x2_hat[0] + b21 * u_signal + l21 * fb_value_v;
-
-    
-
-    pwm_output_bits = (int) u_signal;
-    //pwm_output_bits = 394;
-
-    /*if(pwm_output_bits > 4095){
-        pwm_output_bits = 4095;
-    } else if(pwm_output_bits < 0) {
-        pwm_output_bits = 0;
-    }*/
     
     ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
-
-    if(pwm_output_bits == 0){
-        if(error > 0){
-            accumulated_error += error;
-        }
-    } else if(pwm_output_bits == 1000){
-        if(error < 0){
-            accumulated_error += error;
-        }
-    } else {
-        accumulated_error += error;
-    }
-   //accumulated_error += error;
 }
 
 void vTaskPrint(void *pvParameters){
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    float setpoint_v_l = 0.0;
     float fb_value_v_l = 0.0;
-    float error_l = 0.0;
-    float accumulated_error_l = 0.0;
-    float x1_hat_l = 0.0;
-    float x2_hat_l = 0.0;
+    float fb_value_calibrated_l = 0.0;
     int pwm_output_bits_l = 0;
 
     while(true){
         taskENTER_CRITICAL(&_spinlock);
-        setpoint_v_l = setpoint_v;
         fb_value_v_l = fb_value_v;
-        error_l = error;
-        accumulated_error_l = accumulated_error;
-        x1_hat_l = x1_hat[0];
-        x2_hat_l = x2_hat[0];
+        fb_value_calibrated_l = fb_value_calibrated;
         pwm_output_bits_l = pwm_output_bits;
         taskEXIT_CRITICAL(&_spinlock);
 
-        printf("Setpoint: %.2f V \n", setpoint_v_l);
         printf("Feedback: %.2f V \n", fb_value_v_l);
-        printf("Error: %.2f V \n", error_l);
-        printf("q: %.2f \n", accumulated_error_l);
-        printf("x1: %.2f \n",x1_hat_l);
-        printf("x2: %.2f \n",x2_hat_l);
+        printf("Calibrated: %.2f V \n", fb_value_calibrated_l);
         printf("PWM: %d \n", pwm_output_bits_l);
+
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(PRINT_TASK_PERIOD_MS));
+    }
+}
+
+void vTaskRead(void *pvParameters){
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+
+    bool antibounce = false;
+
+    while(true){
+        
+        static TickType_t lastChangeTime = 0;
+        if(!gpio_get_level(GPIO_NUM_7)){
+            if(!antibounce){
+            TickType_t currentTime = xTaskGetTickCount();
+            if((currentTime - lastChangeTime) >= pdMS_TO_TICKS(1000)){
+                taskENTER_CRITICAL(&_spinlock);
+                pwm_output_bits = pwm_output_bits + 100;
+                if(pwm_output_bits > 4095){
+                pwm_output_bits = 4095;
+                }
+                taskEXIT_CRITICAL(&_spinlock);
+
+                lastChangeTime = currentTime;
+            }
+            antibounce = true;
+            }
+        } else {
+            antibounce = false;
+        }
+
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(READ_TASK_PERIOD_MS));
     }
 }

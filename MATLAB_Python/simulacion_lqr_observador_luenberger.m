@@ -2,22 +2,22 @@ clear all;
 close all;
 
 %% Parámetros de Simulación
-Ts = 200e-6;
-Tf = 1;
+Ts = 0.001;
+Tf = 3;
 Nsim = Tf/Ts;
 t = 0:Ts:Tf;
 
 %% Señal de Entrada - Set Point
-r_sp = 2*ones(size(t));
+r_sp = 2.5*ones(size(t));
 
 %% Espacio de estados identificado
-A = [0 1;-0.846 1.844];
-B = [0.1136; 0.1336];
+A = [0 1;-1.914e5 -3744];
+B = [2.214; -7000];
 C = [1 0];
 D = 0;
 
-SS_disc = ss(A, B, C, D, Ts);
-sys_ss = d2c(SS_disc);
+sys_ss = ss(A, B, C, D);
+SS_disc = c2d(sys_ss, Ts);
 
 %% Funcion de transferencia circuito RC
 % R = 10e3;
@@ -35,25 +35,25 @@ nx = length(sys_ss.A);
 
 %% Determinación de la matriz K - LQR
 % Definir matrices de costo para LQR
-Q = diag([10000 10 1000000]);
-R = 10000; % Tamaño de las columna de B
+Q = diag([1000000 0.001 1000]);
+R = 0.000000001; % Tamaño de las columna de B
 
 K_hat = lqi(SS_disc, Q, R);
 K_new = K_hat(1:nx);
-ki = 5*K_hat(end);
+ki = K_hat(end);
 
 %% Observador
 x0 = zeros(1, nx)';
 
 x_hat = ones(nx, Nsim + 1) .* x0;
-pole1_obs = 0.2;
-pole2_obs = -0.2;
+pole1_obs = 0;
+pole2_obs = -0.1;
 p_obs = [pole1_obs pole2_obs];
 L = place(SS_disc.A', SS_disc.C', p_obs); % Ganancia del observador
 L = L';
 
 %% Variables Iniciales
-x = ones(nx, Nsim + 1) .* x0;
+x = ones(nx, Nsim + 1) .* [0; 0];
 
 % Salidas del simulador
 yOut  = SS_disc.C*x0; 
@@ -69,9 +69,9 @@ y_feedback = SS_disc.C*x0;
 % microcontrolador, el tiempo entre interrupciones el tiempo de muestreo
 for k = 1:Nsim
     
-    if k >= 0.5/Ts
-        r_sp(k) = 3;
-    end
+    %if k >= 0.5/Ts
+        %r_sp(k) = 3;
+    %end
     % Microcontrolador %
     e(k) = r_sp(k) - y_feedback;
 
@@ -85,11 +85,11 @@ for k = 1:Nsim
     % Con integrador
     u(k) = -K_new*x_hat(:, k)-ki*q(k) ;
 
-    % if u(k) < 0
-    %     u(k) = 0;
-    % elseif u(k) > 3.3
-    %     % u(k) = 3.3;
-    % end
+    if u(k) < 0
+        u(k) = 0;
+    elseif u(k) > 1000
+        u(k) = 1000;
+    end
     
     x_hat(:, k+1) = (SS_disc.A - L*SS_disc.C)*x_hat(:, k) + SS_disc.B*u(k) + L*y_feedback;
      

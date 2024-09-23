@@ -9,7 +9,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
-#define ABRITRARY_SETPOINT 1
+#define ABRITRARY_SETPOINT 0
 #define SETPOINT_ARBITRARY_V 7.5
 
 #define PRINT_TASK_PERIOD_MS 10
@@ -173,8 +173,8 @@ void timer_callback(void* arg){
 
     u_signal = -ki * accumulated_error - (K_new[0] * x1_hat + K_new[1] * x2_hat);
     
-    if(u_signal > 1000.0){
-        u_signal = 1000.0;
+    if(u_signal > 4095.0){
+        u_signal = 4095.0;
     } else if(u_signal < 0.0){
         u_signal = 0.0;
     }
@@ -223,7 +223,7 @@ void timer_callback(void* arg){
         if(error > 0){
             accumulated_error += error;
         }
-    } else if(pwm_output_bits == 1000){
+    } else if(pwm_output_bits == 4095){
         if(error < 0){
             accumulated_error += error;
         }

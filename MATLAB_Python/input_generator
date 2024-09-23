@@ -1,0 +1,12 @@
+clear all;
+close all;
+
+Ts = 0.01;
+s = 3;
+n = 14;
+
+u = ones(s/Ts);
+
+for k 1:size(u)
+
+end

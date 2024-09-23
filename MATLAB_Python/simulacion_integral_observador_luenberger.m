@@ -2,35 +2,30 @@ clear all;
 close all;
 
 %% Parámetros de Simulación
-Ts = 200e-6;
+Ts = 0.01;
 Tf = 1;
 Nsim = Tf/Ts;
 t = 0:Ts:Tf;
 
 %% Señal de Entrada - Set Point
-r_sp = 2*ones(size(t));
+r_sp = 7*ones(size(t));
 
 %% Espacio de estados identificado
-A = [0 1;-0.846 1.844];
-B = [0.1136; 0.1336];
+A = [0 1;-9.769e4 -1008];
+B = [-11.54; 3.629e5];
 C = [1 0];
 D = 0;
 
-% Funcion de transferencia circuito RC
-% num = 1/(R*C);
-% den = [1 1/(R*C)];
-% [A, B, C, D] = tf2ss(num,den);
-
-SS_disc = ss(A, B, C, D, Ts);
-sys_ss = d2c(SS_disc);
+sys_ss = ss(A, B, C, D);
+SS_disc = c2d(sys_ss, Ts);
 
 %% Tamaño vectores Espacio de Estados
 nx = length(sys_ss.A);
 
 %% Asignación de Polos
-pole1 = -0.2+0.5*j;
-pole2 = -0.2-0.5*j;
-pole3 = 0.5;
+pole1 = -0.5;
+pole2 = -0.6;
+pole3 = -0.7;
 
 p = [pole1 pole2 pole3];
 
@@ -52,8 +47,8 @@ x0 = zeros(1, nx)';
 x = ones(nx, Nsim + 1) .* x0;
 
 % Observador
-x_hat = ones(nx, Nsim + 1) .* x0;
-pole1_obs = 0.1;
+x_hat = ones(nx, Nsim + 1) .* [2; 2];
+pole1_obs = 0;
 pole2_obs = -0.1;
 p_obs = [pole1_obs pole2_obs];
 L = place(A', C', p_obs); % Ganancia del observador
@@ -69,6 +64,7 @@ integral_error = zeros(1, Nsim);
 e = zeros(1, Nsim);
 q = zeros(1, Nsim);
 y_feedback = SS_disc.C*x0;
+lastu = 0;
 
 %% Representa el tiempo real, cuanto tiempo está corriendo el
 % microcontrolador, el tiempo entre interrupciones el tiempo de muestreo
@@ -92,12 +88,15 @@ for k = 1:Nsim
 
     if u(k) < 0
         u(k) = 0;
-    elseif u(k) > 3.3
-        %u(k) = 3.3;
+    elseif u(k) > 4095
+        u(k) = 4095;
     end
+
+    %u(k) = 3.3*0.5;
     
     x_hat(:, k+1) = (SS_disc.A - L*SS_disc.C)*x_hat(:, k) + SS_disc.B*u(k) + L*y_feedback;
-     
+    lastu = u(k);
+
     uOut = [uOut u(k)];
     
     u = u(k)*ones(1, numel(dt)); % ZOH de la U - DAC
