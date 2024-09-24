@@ -9,6 +9,10 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
+// Saturation limits
+#define SATURATION_HIGH_LIMIT 4095
+//
+
 #define SETPOINT_ARBITRARY_V 4.5
 
 #define PWM_FREQUENCY 1000
@@ -17,69 +21,71 @@
 #define SAMPLE_SIZE 1000  // 1000 samples at 1ms each = 1 second
 
 #define PWM_GPIO_NUM GPIO_NUM_4
-#define POT_CHANNEL ADC_CHANNEL_4
 #define FB_CHANNEL ADC_CHANNEL_5
 
+// Discrete state space model
+const float a11 = 0.9626;
+const float a12 = 0.000254;
+const float a21 = -48.61;
+const float a22 = 0.01175;  
+
+const float b11 = 0.0008139;
+const float b21 = -1.861;
+
+const float c11 = 1;
+const float c12 = 0;
+//
+
+// Control constants
+const float K_new[2] = {27.2030, -0.0060};
+const float ki = -16.9678;
+const float Ts = TIMER_PERIOD_US / 1000000.0;
+//
+
+// Kalman tuning parameters
+float q11 = 1;   // Process noise
+float q22 = 1;   // Process noise
+
+float r = 0.001; // Measurement error covariance
+//
+
+// Handles
 adc_oneshot_unit_handle_t adc1_handle;
 adc_cali_handle_t adc1_cali_handle;
 esp_timer_handle_t timer_handle;
+//
 
+// Variables
 int fb_value_mv = 0;
 float fb_value_v = 0.0;
 int setpoint_mv = 0;
 float setpoint_v = 0.0;
 float accumulated_error = 0.0;
-float y_feedback;
-
-const float Ts = TIMER_PERIOD_US / 1000000.0;
-
+int pwm_output_bits = 0;
 double error = 0.0;
 double u_signal = 0.0;
-
-const float K_new[2] = {27.2030, -0.0060};
-const float ki = -16.9678;
-
-const double a11 = 0.9626;
-const double a12 = 0.000254;
-const double a21 = -48.61;
-const double a22 = 0.01175;  
-
-const double b11 = 0.0008139;
-const double b21 = -1.861;
-
-const double c11 = 1;
-const double c12 = 0;
-
-int pwm_output_bits = 0;
-
-int value_index = 0;
 //
 
-// For printing
-float u_values[SAMPLE_SIZE];
-float y_values[SAMPLE_SIZE];
-float x1_values[SAMPLE_SIZE];
-float x2_values[SAMPLE_SIZE];
-//
-
-// Kalman
-float R_kalman, q1, q2; // Covariances
-float x1_hat = 0.0, x2_hat = 0.0; // Estimated states
-float P_k11 = 1.0, P_k12 = 0.0, P_k21 = 0.0, P_k22 = 1.0; // Covariance matrix
-float P_k_pred11, P_k_pred12, P_k_pred21, P_k_pred22; // Predicted covariance matrix
+// Kalman filter variables
+float x1_hat = 0.0, x2_hat = 0.0; // estimated states
+float P_k11 = 1.0, P_k12 = 0.0, P_k21 = 0.0, P_k22 = 1.0; // Covariance error matrix
+float P_k_pred11, P_k_pred12, P_k_pred21, P_k_pred22; // Predicted covariance error matrix
 float x1_pred, x2_pred; // Predicted states
-float S = 0.0;
-float K11 = 0.0, K21 = 0.0; // Correction coefficients
-float y_hat = 0.0, y_error = 0.0; // Error variables
-
-float q11 = 0.001;
-float q22 = 0.001;
-
-float r = 0.001;
+float S = 0.0;          // Denominator coefficient for kalman gains
+float K11 = 0.0, K21 = 0.0; // Kalman gains
+float y_hat = 0.0, y_error = 0.0;
 //
 
 // Feedback correction coefficients
 const float fb_curve_coefficients[4] = {-0.0358, 4.0233, -0.487, 0.1506};
+//
+
+// For printing
+int value_index = 0;
+float u_values[SAMPLE_SIZE];
+float y_values[SAMPLE_SIZE];
+float x1_values[SAMPLE_SIZE];
+float x2_values[SAMPLE_SIZE];
 //
 
 void timer_callback(void* arg);
@@ -164,28 +170,31 @@ void timer_callback(void* arg){
         return;
     }
 
+    // Feedback measuring and calibration
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
     fb_value_v = fb_curve_coefficients[3] * pow(fb_value_v, 3) + fb_curve_coefficients[2] * pow(fb_value_v, 2) + fb_curve_coefficients[1] * fb_value_v + fb_curve_coefficients[0];
-    
     if(fb_value_v < 0.0){
         fb_value_v = 0.0;
     } else if(fb_value_v > 12.0){
         fb_value_v = 12.0;
     }
-    y_feedback = fb_value_v;
+    float y_feedback = fb_value_v;
+    //
 
     setpoint_v = SETPOINT_ARBITRARY_V;
 
+    // Error and control signal calculation
     error = setpoint_v - fb_value_v;
 
     u_signal = -ki * accumulated_error - (K_new[0] * x1_hat + K_new[1] * x2_hat);
     
-    if(u_signal > 4095.0){
-        u_signal = 4095.0;
+    if(u_signal > SATURATION_HIGH_LIMIT){
+        u_signal = SATURATION_HIGH_LIMIT;
     } else if(u_signal < 0.0){
         u_signal = 0.0;
     }
+    //
 
     // Kalman filter
     x1_pred = a11 * x1_hat + a12 * x2_hat + b11 * u_signal;
@@ -196,10 +205,10 @@ void timer_callback(void* arg){
     P_k_pred21 = (a21 * P_k11 + a22 * P_k21) * a11 + (a21 * P_k12 + a22 * P_k22) * a12;
     P_k_pred22 = (a21 * P_k11 + a22 * P_k21) * a21 + (a21 * P_k12 + a22 * P_k22) * a22 + q22;
 
-    float S = c11 * (c11 * P_k_pred11 + c12 * P_k_pred21) + c12 * (c11 * P_k_pred12 + c12 * P_k_pred22) + R_kalman;
+    S = c11 * (c11 * P_k_pred11 + c12 * P_k_pred21) + c12 * (c11 * P_k_pred12 + c12 * P_k_pred22) + r;
 
-    float K11 = (P_k_pred11 * c11 + P_k_pred12 * c12) / S;
-    float K21 = (P_k_pred21 * c11 + P_k_pred22 * c12) / S;
+    K11 = (P_k_pred11 * c11 + P_k_pred12 * c12) / S;
+    K21 = (P_k_pred21 * c11 + P_k_pred22 * c12) / S;
 
     y_hat = c11 * x1_pred + c12 * x2_pred;  
     y_error = y_feedback - y_hat;
@@ -210,29 +219,37 @@ void timer_callback(void* arg){
     P_k11 = (1 - K11 * c11) * P_k_pred11 - K11 * c12 * P_k_pred12;
     P_k12 = (1 - K11 * c11) * P_k_pred12 - K11 * c12 * P_k_pred22;
     P_k21 = (1 - K21 * c12) * P_k_pred21 - K21 * c11 * P_k_pred11;
-    P_k22 = (1 - K21 * c12) * P_k_pred22 - K21 * c11 * P_k_pred12;      
+    P_k22 = (1 - K21 * c12) * P_k_pred22 - K21 * c11 * P_k_pred12;
+    //   
+
+    // PWM output
+    pwm_output_bits = (int) u_signal;
+
+    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
     //
 
-    pwm_output_bits = (int) u_signal;
-    
-    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, pwm_output_bits, 0);
-
-    u_values[value_index] = u_signal;
-    y_values[value_index] = y_feedback;
-    x1_values[value_index] = x1_hat;
-    x2_values[value_index] = x2_hat;
-
+    // Anti-windup or not
+#if INTEGRATOR_ANTIWINDUP
     if(pwm_output_bits == 0){
         if(error > 0){
             accumulated_error += error;
         }
-    } else if(pwm_output_bits == 4095){
+    } else if(pwm_output_bits == SATURATION_HIGH_LIMIT){
         if(error < 0){
             accumulated_error += error;
         }
     } else {
         accumulated_error += error;
     }
+#else
+   accumulated_error += error;
+#endif
+    //
+
+    u_values[value_index] = u_signal;
+    y_values[value_index] = y_feedback;
+    x1_values[value_index] = x1_hat;
+    x2_values[value_index] = x2_hat;
 }
 
 void print_output_values(void) {
