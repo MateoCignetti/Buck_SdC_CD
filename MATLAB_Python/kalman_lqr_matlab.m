@@ -52,6 +52,7 @@ integral_error = zeros(1, Nsim);
 e = zeros(1, Nsim);
 q = zeros(1, Nsim);
 y_feedback = SS_disc.C*x0;
+lastu = 0;
 
 %% Representa el tiempo real, cuanto tiempo está corriendo el
 % microcontrolador, el tiempo entre interrupciones el tiempo de muestreo
@@ -68,9 +69,11 @@ for k = 1:Nsim
 
     % Con integrador
     u(k) = -ki*q(k) - K_new*x_hat(:, k);
+
     
     % Predicción del estado y de la covarianza
-    x_hat(:, k) = SS_disc.A * x_hat(:, k) + SS_disc.B * u(k);
+    x_hat(:, k) = SS_disc.A * x_hat(:, k) + SS_disc.B * lastu;
+    lastu = u(k);
     P_kalman_pred = SS_disc.A * P_kalman * SS_disc.A' + Q_kalman;
     
     % Corrección (actualización) con la medición
@@ -116,23 +119,25 @@ hold on
 subplot(2,1,1)
     hold on
     for i = 1:nx
-        plot(t, x_hat(i, 1:Nsim+1));
+        plot(t, x(1, 1:Nsim+1));
+        plot(t, x_hat(1, 1:Nsim+1));
     end
-    legend('x_{hat}(1)','x_{hat}(2)','x_{hat}(3)');
+    legend('x_{(1)}','x_{hat}(1)');
     grid on
-    title('Estimación de los estados x_hat');
+    title('Estado x1 real y estimado');
     xlabel('Tiempo [s]');
-    ylabel('Estados estimados');
+    ylabel('Estados');
 subplot(2,1,2)
     hold on
     for i = 1:nx
-        plot(t, x(i, 1:Nsim+1));
+        plot(t, x(2, 1:Nsim+1));
+        plot(t, x_hat(2, 1:Nsim+1));
     end
-    legend('x(1)','x(2)','x(3)');
+    legend('x_{(2)}','x_{hat}(2)');
     grid on
-    title('Estados reales x');
+    title('Estado x2 real y estimado');
     xlabel('Tiempo [s]');
-    ylabel('Estados estimados');
+    ylabel('Estados');
 
 %% Gráficos de la estimación de los estados junto
 figure(4)
@@ -140,12 +145,32 @@ hold on
 for i = 1:nx
     plot(t, x_hat(i, 1:Nsim+1));
 end
-legend('x_{hat}(1)','x_{hat}(2)','x_{hat}(3)');
+legend('x_{hat}(1)','x_{hat}(2)');
 for i = 1:nx
     plot(t, x(i, 1:Nsim+1));
 end
-legend('x_{hat}(1)','x_{hat}(2)','x_{hat}(3)','x(1)','x(2)','x(3)');
+legend('x_{hat}(1)','x_{hat}(2)','x(1)','x(2)');
 grid on
 title('Estados reales x y estimados x_{hat}');
 xlabel('Tiempo [s]');
 ylabel('Estados estimados');
+
+%% Estados reales por separado
+figure(5)
+hold on
+subplot(2,1,1)
+    hold on
+    plot(t, x(1, 1:Nsim+1));
+    legend('x(1)');
+    grid on
+    %title('Estados respect');
+    xlabel('Tiempo (s)');
+    ylabel('Tensión de salida (V)');
+subplot(2,1,2)
+    hold on
+    plot(t, x(2, 1:Nsim+1), 'r');
+    legend('x(2)');
+    grid on
+    %title('Estados reales x');
+    xlabel('Tiempo (s)');
+    ylabel('Estado x2');

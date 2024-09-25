@@ -38,7 +38,7 @@ const float c12 = 0;
 
 // Control constants
 const float K_new[2] = {27.2030, -0.0060};
-const float ki = -16.9678;
+const float ki = 16.9678;
 const float Ts = TIMER_PERIOD_US / 1000000.0;
 //
 
@@ -46,7 +46,7 @@ const float Ts = TIMER_PERIOD_US / 1000000.0;
 float q11 = 1;   // Process noise
 float q22 = 1;   // Process noise
 
-float r = 0.001; // Measurement error covariance
+float r = 0.01; // Measurement error covariance
 //
 
 // Handles
@@ -64,6 +64,7 @@ float accumulated_error = 0.0;
 int pwm_output_bits = 0;
 double error = 0.0;
 double u_signal = 0.0;
+float y_feedback = 0.0;
 //
 
 // Kalman filter variables
@@ -179,7 +180,7 @@ void timer_callback(void* arg){
     } else if(fb_value_v > 12.0){
         fb_value_v = 12.0;
     }
-    float y_feedback = fb_value_v;
+    y_feedback = fb_value_v;
     //
 
     setpoint_v = SETPOINT_ARBITRARY_V;
@@ -187,7 +188,11 @@ void timer_callback(void* arg){
     // Error and control signal calculation
     error = setpoint_v - fb_value_v;
 
-    u_signal = -ki * accumulated_error - (K_new[0] * x1_hat + K_new[1] * x2_hat);
+    // Kalman filter - predict states
+    x1_pred = a11 * x1_hat + a12 * x2_hat + b11 * u_signal;
+    x2_pred = a21 * x1_hat + a22 * x2_hat + b21 * u_signal;
+
+    u_signal = ki * accumulated_error - (K_new[0] * x1_hat + K_new[1] * x2_hat);
     
     if(u_signal > SATURATION_HIGH_LIMIT){
         u_signal = SATURATION_HIGH_LIMIT;
@@ -196,26 +201,28 @@ void timer_callback(void* arg){
     }
     //
 
-    // Kalman filter
-    x1_pred = a11 * x1_hat + a12 * x2_hat + b11 * u_signal;
-    x2_pred = a21 * x1_hat + a22 * x2_hat + b21 * u_signal;
 
+    // Kalman filter - predict covariance error matrix
     P_k_pred11 = (a11 * P_k11 + a12 * P_k21) * a11 + (a11 * P_k12 + a12 * P_k22) * a12 + q11;
     P_k_pred12 = (a11 * P_k11 + a12 * P_k21) * a21 + (a11 * P_k12 + a12 * P_k22) * a22;
     P_k_pred21 = (a21 * P_k11 + a22 * P_k21) * a11 + (a21 * P_k12 + a22 * P_k22) * a12;
     P_k_pred22 = (a21 * P_k11 + a22 * P_k21) * a21 + (a21 * P_k12 + a22 * P_k22) * a22 + q22;
 
+    // Kalman filter - calculate Kalman gains
     S = c11 * (c11 * P_k_pred11 + c12 * P_k_pred21) + c12 * (c11 * P_k_pred12 + c12 * P_k_pred22) + r;
 
     K11 = (P_k_pred11 * c11 + P_k_pred12 * c12) / S;
     K21 = (P_k_pred21 * c11 + P_k_pred22 * c12) / S;
 
+    // Kalman filter - correct states
     y_hat = c11 * x1_pred + c12 * x2_pred;  
     y_error = y_feedback - y_hat;
 
     x1_hat = x1_pred + K11 * y_error;
     x2_hat = x2_pred + K21 * y_error;
-    
+
+
+    // Kalman filter - correct covariance error matrix
     P_k11 = (1 - K11 * c11) * P_k_pred11 - K11 * c12 * P_k_pred12;
     P_k12 = (1 - K11 * c11) * P_k_pred12 - K11 * c12 * P_k_pred22;
     P_k21 = (1 - K21 * c12) * P_k_pred21 - K21 * c11 * P_k_pred11;
