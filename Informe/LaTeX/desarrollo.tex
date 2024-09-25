@@ -814,7 +814,55 @@ Finalmente se decide utilizar la siguiente configuración de control PID:
 \end{figure}
 \vspace{-0.5cm}
 
+\subsubsection*{\it{Representación en espacio de estados}}
+\vspace{-0.25cm}
+
+Una representación en espacio de estados es un modelo matemático de un sistema físico especificado como un conjunto de
+variables de entrada, salida y de estado relacionadas por ecuaciones diferenciales de primer orden o ecuaciones en
+diferencias. Dichas variables, llamadas variables de estado, evolucionan en el tiempo de una manera que depende
+de los valores que tienen en un instante dado y de los valores impuestos externamente de las variables de entrada.
+Los valores de las variables de salida dependen de los valores de las variables de estado y también pueden depender
+de los valores de las variables de entrada.
+
+La representación en espacio de estados más general de un sistema lineal con \( p \) entradas, \( q \) salidas y \( n \)
+variables de estado se escribe en la siguiente forma:
+
+\vspace{-0.5cm}
+\begin{equation}
+    \begin{cases}
+        \dot{x}(t) = \textbf{A} x(t) + \textbf{B} u(t) \\
+        y(t) = \textbf{C} x(t) + \textbf{D} u(t)
+    \end{cases}
+\end{equation}
+\vspace{-0.5cm}
+
+Donde:
+
+\begin{itemize}[noitemsep]
+    \item \( x(t) \) se llama "vector de estado".
+    \item \( y(t) \) se llama "vector de salida".
+    \item \( u(t) \) se llama "vector de entrada".
+    \item \( \textbf{A} \) es la "matriz de estado (o del sistema)", dimensión \( n \times n \),
+    \item \( \textbf{B} \) es la "matriz de entrada", dimensión \( n \times p \),
+    \item \( \textbf{C} \) es la "matriz de salida", dimensión \( q \times n \),
+    \item \( \textbf{D} \) es la "matriz de realimentación directa (o feed-forward)" (usualmente cero), dimensión \( q \times p \),
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=4cm]{sys_ss.png}
+    \vspace{-0.25cm}
+    \caption{Representación en diagrama de bloques de las ecuaciones de espacio de estados.}
+    \label{fig:sys_ss}
+\end{figure}
+\vspace{-0.5cm}
+
+La representación en espacio de estados no es única; muchos (de hecho, un número infinito) de sistemas en espacio de estados pueden usarse para representar cualquier sistema físico lineal.
+
+\end{document}
+
 \subsubsection*{\it{Control en espacio de estados}}
+\vspace{-0.25cm}
 
 Antes de comenzar el desarrollo de un sistema de control en espacio de estados, se debe analizar
 que el sistema cumpla con la condición para garantizar una controlabilidad completa. Para ello,
@@ -869,6 +917,31 @@ Primero, se analiza si el sistema cumple con la condición para ser completament
     \ Sistema\  completamente \ observable
 \end{equation}
 \vspace{-0.5cm}         
+
+Como el sistema es controlable y completamente observable, se procede a diseñar un servosistema para que la
+salida del sistema siga una referencia. En espacio de estados, se calcula una matriz de retroalimentación de estados
+K que, aplicada en el sistema en espacio de estados, permite calcular una señal de control u para minimizar el error.
+Sin embargo, si la planta no posee naturalmente un integrador, se debe insertar un integrador
+en el camino directo entre el comparador de error y la planta, obteniendo el siguiente sistema:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5cm]{servo_diagrama.png}
+    \vspace{-0.25cm}
+    \caption{Servosistema de tipo 1.}
+    \label{fig:servo_diagrama}
+\end{figure}
+
+Donde:
+
+\begin{itemize}[noitemsep]
+    \item $\textbf{x} =$ vector de estado de la planta (vector de dimensión n estados).
+    \item $\epsilon =$ salida del integrador.
+    \item $r =$ señal de entrada de referencia.
+    \item $\textbf{A}$ matriz de coeficientes constantes de $n x n$.
+    \item $\textbf{B}$ matriz de coeficientes constantes de $n x 1$.
+    \item $\textbf{C}$ matriz de coeficientes constantes de $1 x n$.
+\end{itemize}
 
 \parencite{OGATA}
 
