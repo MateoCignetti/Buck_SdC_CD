@@ -42,13 +42,23 @@ def plot_data(filename):
 
     # Utilizar la columna de tiempo del CSV para las gráficas
     time_data = data["Time"]
+    u_data = data["U"]
+    y_data = data["Y"]
+    x1_data = data["X1"]
+    x2_data = data["X2"]
+
+    # Corregir primer valor
+    u_data[0] = 0.0
+    y_data[0] = 0.0
+    x1_data[0] = 0.0
+    x2_data[0] = 0.0
 
     # Graficar U
     plt.figure()
-    plt.plot(time_data, data["U"], label='U')
-    plt.title('Control Input (U) vs Time')
+    plt.plot(time_data, u_data, label='u')
+    plt.title('Señal de control (u) en el tiempo')
     plt.xlabel('Tiempo (s)')
-    plt.ylabel('Valor de U')
+    plt.ylabel('PWM (bit)')
     plt.grid()
     plt.legend()
     plt.savefig(filename.replace('.csv', '_U.png'))
@@ -56,32 +66,34 @@ def plot_data(filename):
 
     # Graficar Y
     plt.figure()
-    plt.plot(time_data, data["Y"], label='Y', color='orange')
-    plt.title('Output (Y) vs Time')
+    plt.plot(time_data, y_data, label='y', color='orange')
+    plt.title('Salida (y) en el tiempo')
     plt.xlabel('Tiempo (s)')
-    plt.ylabel('Valor de Y')
+    plt.ylabel('Tensión de retroalimentación (V)')
     plt.grid()
     plt.legend()
+    bottom, top = plt.ylim()
     plt.savefig(filename.replace('.csv', '_Y.png'))
     plt.close()
 
     # Graficar X1
     plt.figure()
-    plt.plot(time_data, data["X1"], label='X1', color='green')
-    plt.title('State X1 vs Time')
+    plt.plot(time_data, x1_data, label='x1', color='green')
+    plt.title('Estado x1 en el tiempo')
     plt.xlabel('Tiempo (s)')
-    plt.ylabel('Valor de X1')
+    plt.ylabel('Valor de x1')
     plt.grid()
     plt.legend()
+    #plt.ylim(bottom, top)
     plt.savefig(filename.replace('.csv', '_X1.png'))
     plt.close()
 
     # Graficar X2
     plt.figure()
-    plt.plot(time_data, data["X2"], label='X2', color='red')
-    plt.title('State X2 vs Time')
+    plt.plot(time_data, x2_data, label='x2', color='red')
+    plt.title('Estado x2 en el tiempo')
     plt.xlabel('Tiempo (s)')
-    plt.ylabel('Valor de X2')
+    plt.ylabel('Valor de x2')
     plt.grid()
     plt.legend()
     plt.savefig(filename.replace('.csv', '_X2.png'))
