@@ -43,10 +43,10 @@ const float Ts = TIMER_PERIOD_US / 1000000.0;
 //
 
 // Kalman tuning parameters
-float q11 = 1;   // Process noise
-float q22 = 1;   // Process noise
+float q11 = 0.000001;   // Process noise
+float q22 = 0.000001;   // Process noise
 
-float r = 0.01; // Measurement error covariance
+float r = 1000000; // Measurement error covariance
 //
 
 // Handles
@@ -171,6 +171,14 @@ void timer_callback(void* arg){
         return;
     }
 
+    if(value_index > 750){
+        setpoint_v = 2.0;
+    } else if (value_index > 350){
+        setpoint_v = 8.0;
+    } else {
+        setpoint_v = 2.0;
+    }
+
     // Feedback measuring and calibration
     adc_oneshot_get_calibrated_result(adc1_handle, adc1_cali_handle, FB_CHANNEL, &fb_value_mv);
     fb_value_v = fb_value_mv / 1000.0;
@@ -183,7 +191,7 @@ void timer_callback(void* arg){
     y_feedback = fb_value_v;
     //
 
-    setpoint_v = SETPOINT_ARBITRARY_V;
+    //setpoint_v = SETPOINT_ARBITRARY_V;
 
     // Error and control signal calculation
     error = setpoint_v - fb_value_v;

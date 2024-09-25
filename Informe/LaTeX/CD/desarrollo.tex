@@ -529,7 +529,7 @@ El modelo continuo estimado en espacios de estado es el siguiente:
 \end{equation}
 \vspace{-0.5cm}
 
-Discretizando utilizando retención de orden cero (zoh), con un tiempo de muestreo de $0.001\ s$, se obtiene:
+Discretizando mediante retención de orden cero (zoh), con un tiempo de muestreo de $0.001\ s$, se obtiene:
 
 \vspace{-0.5cm}
 \begin{equation}
@@ -1355,10 +1355,10 @@ El filtro de Kalman se basa en dos fases: la fase de predicción y la fase de ac
 \textit{Fase de corrección:}
 \begin{enumerate}
     \item Calcular la ganancia de Kalman:
-    
+
     \vspace{-0.5cm}
     \begin{equation}
-        \mathbf{K} = \dfrac{\mathbf{P_{k_p}}\ \textbf{C}^T}{\textbf{C}\ \mathbf{P_{k_p}}\ \textbf{C}^T + \textbf{R}}
+        \mathbf{K} = (\mathbf{P_{k_p}}\ \textbf{C}^T) \cdot ({\textbf{C}\ \mathbf{P_{k_p}}\ \textbf{C}^T + \textbf{R}})^{-1}
     \end{equation}
     \vspace{-0.5cm}
 
@@ -1483,7 +1483,7 @@ de cada matriz por separado:
         c_{12}
     \end{bmatrix}
     \right)
-    \bigg/
+    \cdot
     \left(
     \begin{bmatrix}
         c_{11} && c_{12}
@@ -1500,7 +1500,7 @@ de cada matriz por separado:
     \end{bmatrix}
     +
     R
-    \right)
+    \right)^{-1}
 \end{equation}
 \vspace{-0.5cm}
 
@@ -1509,9 +1509,9 @@ de cada matriz por separado:
     \begin{cases}
         S = c_{11}\ (P_{k_{p_{11}}} + c_{12}\ P_{k_{p_{21}}}) + c_{12}\ (c_{11}\ P_{k_{p_{12}}} + c_{12}\ P_{k_{p_{22}}}) + R
         \\
-        K_{11} = (P_{k_{p_{11}}}\ c_{11} + P_{k_{p_{12}}}\ c_{12})\ /\ S 
+        K_{11} = (P_{k_{p_{11}}}\ c_{11} + P_{k_{p_{12}}}\ c_{12}) \cdot S^{-1} 
         \\
-        K_{21} = (P_{k_{p_{21}}}\ c_{11} + P_{k_{p_{22}}}\ c_{12})\ /\ S
+        K_{21} = (P_{k_{p_{21}}}\ c_{11} + P_{k_{p_{22}}}\ c_{12}) \cdot S^{-1}
     \end{cases}
 \end{equation}
 \vspace{-0.5cm}
