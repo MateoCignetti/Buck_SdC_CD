@@ -1,0 +1,6 @@
+// Kalman tuning parameters
+float q11 = 0.01;   // Process noise
+float q22 = 0.01;   // Process noise
+
+float r = 1; // Measurement error covariance
+//
